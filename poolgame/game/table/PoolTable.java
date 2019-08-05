@@ -154,8 +154,8 @@ public class PoolTable {
 	}
 	
 	public interface TableObject {
-		public boolean checkCollide(PoolBall ball);
-		public void draw(DefaultShader shader);
+		boolean checkCollide(PoolBall ball);
+		void draw(DefaultShader shader);
 	}
 	
 }

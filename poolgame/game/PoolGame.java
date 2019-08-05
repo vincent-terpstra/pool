@@ -28,7 +28,9 @@ public class PoolGame extends ApplicationAdapter {
 		Gdx.input.setInputProcessor(control);
 		
 	}
-	
+	@Override public void resize(int width, int height){
+		shader.resize(width, height);
+	}
 	
 	@Override
 	public void create () {

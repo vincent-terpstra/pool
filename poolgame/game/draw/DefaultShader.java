@@ -78,15 +78,23 @@ public class DefaultShader extends ShaderProgram {
 	
 	public DefaultShader(SpriteArray array) {
 		super(vert, frag, 10, uniforms, attributes, new int[] {2, 2});
-		width = PoolTable.width * 2;
-		height = width * (float)Gdx.graphics.getHeight() / (float)Gdx.graphics.getWidth();
-		ratio = 2 * width / Gdx.graphics.getWidth();
 		//create a fixed amount of vertices set to the square to display the ball
 		drawValues = new float[vertices.capacity()];
 		drawPocket = array.get("pocket", Pocket.radius * 2, 0);
 		circle = array.get("circle");
 		rect = array.get("rect");
 	}
+
+	public void resize(int _width, int _height){
+		width = PoolTable.width * 2 + 1;
+		height = width * (float)_height / (float)_width;
+		if(height < 16){
+			height = 16;
+			width = height * (float)_width / (float)_height;
+		}
+		ratio = 2 * width / _width;
+	}
+
 	
 	private static final String[] 
 			uniforms   = {"u_texture", "u_mat" }, 
