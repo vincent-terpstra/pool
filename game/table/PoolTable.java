@@ -20,15 +20,9 @@ public class PoolTable {
 		balls = new ArrayList<PoolBall>();
 		balls.add(new PoolBall(0, -10, 0)); //add cue ball
 		rack();
-		
-		pockets = new Pocket[]{
-				new Pocket(  1),
-				new Pocket( 1, 1),
-				new Pocket( -1),
-				new Pocket(-1, 1),
-				new Pocket( 1,-1),
-				new Pocket(-1,-1)
-		};
+		centre = new Pocket(1);
+		corner = new Pocket(1,1);
+
 		final float rad = 1;
 		final float sqrt = (float)Math.sqrt(2) * rad / 2;
 		
@@ -67,7 +61,7 @@ public class PoolTable {
 		
 	}
 	public final List<PoolBall> balls;
-	public final Pocket[] pockets;
+	public final Pocket centre, corner;
 	public final TableObject[] right, top;
 	
 	private void rack(){
@@ -115,9 +109,9 @@ public class PoolTable {
 			cue.scale(shiftX, shiftY);
 			cue.velocity.scale(shiftX, shiftY);
 
-			pockets[1].checkCollide(cue);
+			corner.checkCollide(cue);
 
-			if ((cue.y() > boundY && (checkCollide(cue, top) || pockets[0].checkCollide(cue))) ||
+			if ((cue.y() > boundY && (checkCollide(cue, top) || centre.checkCollide(cue))) ||
 					cue.x() > boundX && checkCollide(cue, right)) {
 			    cue.pocket = 0;
 				cue.scale(shiftX, shiftY);
@@ -145,13 +139,13 @@ public class PoolTable {
         		current.scale(shiftX, shiftY);
         		current.velocity.scale(shiftX, shiftY);
         		
-        		pockets[1].checkCollide(current);
+        		corner.checkCollide(current);
 				
 				if (current.y() > boundY) {
 					checkCollide(current, top);
-					pockets[0].checkCollide(current);
-					
-				} else if(current.x() > boundX) {
+					centre.checkCollide(current);
+				}
+				if(current.x() > boundX) {
 					checkCollide(current, right);
 				}
 				current.scale(shiftX, shiftY);
@@ -169,13 +163,12 @@ public class PoolTable {
 	private final PointXY b_right, s_right;
 	private final float b_y;
 	public void draw(DefaultShader shader) {
-		for(Pocket p : pockets) {
-			p.draw(shader);
-		}
+		centre.draw(shader);
 		drawEdge(shader);
 		shader.setScale(-1, 1);
 		drawEdge(shader);
 		shader.setScale(1,-1);
+		centre.draw(shader);
 		drawEdge(shader);
 		shader.setScale(-1, -1);
 		drawEdge(shader);
@@ -183,18 +176,17 @@ public class PoolTable {
 	}
 	
 	private void drawEdge(DefaultShader shader) {
-		
+		corner.draw(shader);
 		shader.draw(side, b_right);
 		shader.draw(side, s_right.x(), s_right.y(), 0, 1, -1, 1);
 		shader.draw(left , 0, b_y);
-		/**
+
 		for(TableObject e : right) {
 			e.draw(shader);
 		}
 		for(TableObject e : top) {
 			e.draw(shader);
 		}
-		/**/
 	}
 	
 	public interface TableObject {

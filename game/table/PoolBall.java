@@ -29,7 +29,8 @@ public final class PoolBall extends PointXY {
 	}
 	public void dropPocket(PointXY diff) {
 		pocket = 1;
-		velocity.set(diff);
+		velocity.set(0,0);
+		speed = 0;
 	}
 	/*
 	public void setRandomSpeed() {
