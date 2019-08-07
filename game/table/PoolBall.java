@@ -7,7 +7,7 @@ public final class PoolBall extends PointXY {
 	public final PointXY velocity = new PointXY();
 	public final int id;
 	public float speed;
-	private float pocket = 0;
+	float pocket = 0;
 	public final Matrix3 matrix;
 
 	public boolean checkCollide(PoolBall ball) {

@@ -17,13 +17,14 @@ public class Pocket extends PointXY {
 		float rad = diff.normalize();
 		if(rad < .5f) {
 			ball.velocity.set(0,0);
-		} else if(rad < radius - 1f){
+		} else if(rad < radius - 1){
 			ball.dropPocket(diff);
 		} else if(rad < radius){
 			ball.setSpeed(diff, 1);
-			return true;
-		}
-		return false;
+		} else {
+		    return false;
+        }
+		return true;
 	}
 	
 	public final void draw(DefaultShader shader) {

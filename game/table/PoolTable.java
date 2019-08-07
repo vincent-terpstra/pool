@@ -119,6 +119,7 @@ public class PoolTable {
 
 			if ((cue.y() > boundY && (checkCollide(cue, top) || pockets[0].checkCollide(cue))) ||
 					cue.x() > boundX && checkCollide(cue, right)) {
+			    cue.pocket = 0;
 				cue.scale(shiftX, shiftY);
 				return;
 			}
@@ -153,7 +154,6 @@ public class PoolTable {
 				} else if(current.x() > boundX) {
 					checkCollide(current, right);
 				}
-        		
 				current.scale(shiftX, shiftY);
         		current.velocity.scale(shiftX, shiftY);
             }
