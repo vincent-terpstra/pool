@@ -19,23 +19,23 @@ class PoolControl implements InputProcessor {
 		this.table = table;
 		this.loop = array.get("loop", 2, 2);
 	}
+	private static final float MINSPEED = 10;
 	void draw(DefaultShader shader){
 	    if(touched) {
-            shader.draw(shader.rect, cue.x(), cue.y(), -delta.x(), delta.y(), speed, .2f);
-            shader.drawRatio(loop, downX, downY);
+            shader.drawLine(cue, delta, speed, .2f);
+            shader.drawRatio(loop, down.x(), down.y());
             shader.drawCircle(cue, 3f);
-            table.predict(shader, delta, speed);
+            if(speed > MINSPEED) {
+				table.predict(shader, delta, speed);
+			}
         }
 	}
-	
-	private int downX, downY;
+
 	private boolean touched = false;
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
 		touched = true;
-		this.downX = screenX;
-		this.downY = screenY;
 		down.set(screenX, screenY);
 		delta.set(0,0);
 		return true;
@@ -43,16 +43,17 @@ class PoolControl implements InputProcessor {
 
 	@Override
 	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-	    //if(!PoolTable.locked) {
+        if( speed > MINSPEED // && table.locked
+        ){
             cue.setSpeed(delta.scale(speed));
-        //}
+        }
 		touched = false;
 		return true;
 	}
 
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
-		speed = delta.set(screenX, screenY).move(-1, down).scale(-.1f).normalize();
+		speed = delta.set(screenX, screenY).move(-1, down).scale(-.15f).normalize();
 		return true;
 	}
 	

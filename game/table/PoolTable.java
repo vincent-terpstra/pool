@@ -11,11 +11,12 @@ public class PoolTable {
 	public static final float height = 7.5f, width = 2 * height;
 	private static final float boundX = width * 2 - 2.5f, boundY = height * 2 - 2.5f;
 	
-	private final float[] left, side;
+	private final float[] left, side, mask;
 	public boolean locked = false;
 	public PoolTable(SpriteArray array){
 		left = array.get("left", 0, 4, 0, 0);
 		side = array.get("right", 0, 4, -1, -1);
+		mask = array.get("mask", 2, 2,-.5f, 0);
 		
 		balls = new ArrayList<PoolBall>();
 		balls.add(new PoolBall(0, -10, 0)); //add cue ball
@@ -95,7 +96,7 @@ public class PoolTable {
 
 	private final void findCollision(DefaultShader shader, PoolBall cue){
 		for(int i = 0; i < 100; i++){
-			cue.update(.01f);
+			cue.update(.02f);
 			for(int j = 1; j < balls.size(); j++){
 				PoolBall at = balls.get(j);
 				if(at.checkCollide(cue)){
@@ -163,30 +164,37 @@ public class PoolTable {
 	private final PointXY b_right, s_right;
 	private final float b_y;
 	public void draw(DefaultShader shader) {
-		centre.draw(shader);
-		drawEdge(shader);
-		shader.setScale(-1, 1);
-		drawEdge(shader);
-		shader.setScale(1,-1);
-		centre.draw(shader);
-		drawEdge(shader);
-		shader.setScale(-1, -1);
-		drawEdge(shader);
-		shader.reset();
+		drawCentre(shader);
+		shader.setScale(-1,-1);
+		drawCentre(shader);
+		drawEdge(shader, - 1, 1);
+		drawEdge(shader, 1, -1);
+		drawEdge(shader, -1, -1);
+		drawEdge(shader, 1, 1);
 	}
+
+	private void drawCentre(DefaultShader shader){
+		shader.draw(mask, 0, b_y + 2, 1, 0, DefaultShader.Width(), DefaultShader.Height() - b_y - 2);
+		shader.draw(mask, s_right.x() - 2 , 0, 0, 1, DefaultShader.Height(), DefaultShader.Width() - s_right.x() + 2);
+		centre.draw(shader);
+		shader.draw(mask, 0, b_y + 4, 1, 0, 5, 1);
+	}
+
 	
-	private void drawEdge(DefaultShader shader) {
+	private void drawEdge(DefaultShader shader, float x, float y) {
+		shader.setScale(x, y);
 		corner.draw(shader);
 		shader.draw(side, b_right);
 		shader.draw(side, s_right.x(), s_right.y(), 0, 1, -1, 1);
 		shader.draw(left , 0, b_y);
-
+		/**
 		for(TableObject e : right) {
 			e.draw(shader);
 		}
 		for(TableObject e : top) {
 			e.draw(shader);
 		}
+		/**/
 	}
 	
 	public interface TableObject {

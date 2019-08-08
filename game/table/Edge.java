@@ -16,7 +16,7 @@ public class Edge implements PoolTable.TableObject {
     }
 
     public void draw(DefaultShader shader){
-        shader.drawLine(first, angle, length);
+        shader.drawLine(first, angle, length, .1f);
     //	shader.drawCircle(first, .5f);
     //	shader.drawCircle(first.clone().move(length, angle), .5f);
     }

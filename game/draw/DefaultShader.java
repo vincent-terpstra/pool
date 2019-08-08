@@ -15,6 +15,7 @@ public class DefaultShader extends ShaderProgram {
 	public void draw(float[] draw, PointXY point){
 		draw(draw, point.x(), point.y());
 	}
+
 	public void drawRatio(float[] draw, float x, float y){
 		draw(draw, x * ratio - width, y * ratio - height);
 	}
@@ -23,26 +24,20 @@ public class DefaultShader extends ShaderProgram {
 		draw(circle, point.x(), point.y(), diameter, 0, 1, 1);
 	}
 
-	public void drawLine(PointXY point, PointXY angle, float length){
-		draw(rect, point.x(), point.y(), -angle.x(), angle.y(), length, .1f);
+	public void drawLine(PointXY point, PointXY angle, float length, float scaleY){
+		draw(rect, point.x(), point.y(), -angle.x(), angle.y(), length, scaleY);
 	}
-	
+
 	public void draw(float[] draw, float x, float y){
 		draw(draw, x, y, 1, 0, 1, 1);
 	}
-	
 	public void setScale(float x, float y) {
 		scaleX = x;
 		scaleY = y;
 	}
-	public void reset() {
-		scaleX = 1;
-		scaleY = 1;
-	}
 	
 	private float scaleX = 1, scaleY = 1;
 	public void draw(float[] draw, float x, float y, float cos, float sin, float scaleX, float scaleY){
-		
 		if(drawIdx + draw.length > drawValues.length) end();
 		for(int i = 0; i < draw.length; ){
 			final float drawX = draw[i++] * scaleX;
@@ -83,7 +78,7 @@ public class DefaultShader extends ShaderProgram {
 	}
 
 	public void resize(int _width, int _height){
-		width = PoolTable.width * 2 + 1 + 2;
+		width = PoolTable.width * 2 + 1;
 		height = width * (float)_height / (float)_width;
 		if(height < 16){
 			height = 16;

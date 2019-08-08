@@ -6,7 +6,7 @@ import com.vdt.poolgame.library.PointXY;
 public final class PoolBall extends PointXY {
 	public final PointXY velocity = new PointXY();
 	public final int id;
-	public float speed;
+	private float speed;
 	float pocket = 0;
 	public final Matrix3 matrix;
 
@@ -29,8 +29,7 @@ public final class PoolBall extends PointXY {
 	}
 	public void dropPocket(PointXY diff) {
 		pocket = 1;
-		velocity.set(0,0);
-		speed = 0;
+		velocity.set(diff);
 	}
 	/*
 	public void setRandomSpeed() {
@@ -64,7 +63,7 @@ public final class PoolBall extends PointXY {
 			matrix.rotateY(-velocity.x() * speed * delta, -velocity.y() * speed * delta);
 			speed -= 2 * delta;
 		}
-		return speed != 0 && pocket != 1;
+		return speed != 0;
 	}
 
 }

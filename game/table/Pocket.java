@@ -15,13 +15,15 @@ public class Pocket extends PointXY {
 	public final boolean checkCollide(PoolBall ball){
 		PointXY diff = new PointXY().set(this).move(-1, ball);
 		float rad = diff.normalize();
-		if(rad < radius - 1){
+		if(rad < .5f){
+		    ball.resetSpeed();
+        } else if(rad < radius - 1){
 			ball.dropPocket(diff);
 		} else if(rad < radius){
 			ball.setSpeed(diff, 1);
 		} else {
-		    return false;
-        }
+			return false;
+		}
 		return true;
 	}
 	
