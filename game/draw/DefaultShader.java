@@ -78,12 +78,9 @@ public class DefaultShader extends ShaderProgram {
 	}
 
 	public void resize(int _width, int _height){
-		width = PoolTable.width * 2 + 1;
-		height = width * (float)_height / (float)_width;
-		if(height < 16){
-			height = 16;
-			width = height * (float)_width / (float)_height;
-		}
+		height = Math.max(14.8f, (PoolTable.width * 2 - .5f) * (float)_height / (float)_width);
+		width = height * (float)_width / (float)_height;
+
 		ratio = 2 * width / _width;
 	}
 

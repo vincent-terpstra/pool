@@ -7,7 +7,7 @@ import com.vdt.poolgame.game.table.PoolTable;
 import com.vdt.poolgame.library.PointXY;
 import com.vdt.poolgame.library.SpriteArray;
 
-class PoolControl implements InputProcessor {
+public class PoolControl implements InputProcessor {
 	private final PoolBall cue;
 	private final PoolTable table;
 	private final float[] loop;
@@ -20,7 +20,8 @@ class PoolControl implements InputProcessor {
 		this.loop = array.get("loop", 2, 2);
 	}
 	private static final float MINSPEED = 10;
-	void draw(DefaultShader shader){
+
+	public void draw(DefaultShader shader){
 	    if(touched) {
             shader.drawLine(cue, delta, speed, .2f);
             shader.drawRatio(loop, down.x(), down.y());

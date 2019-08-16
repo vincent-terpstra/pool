@@ -7,11 +7,9 @@ public final class PoolBall extends PointXY {
 	public final PointXY velocity = new PointXY();
 	public final int id;
 	private float speed;
-	float pocket = 0;
 	public final Matrix3 matrix;
 
 	public boolean checkCollide(PoolBall ball) {
-		if(ball.pocket != 0 || pocket != 0) return false;
 		PointXY normal = new PointXY().set(this).move( -1, ball);
 		if(normal.dot(normal) < 4){ //distance of balls 
 			normal.normalize();		//direction of the impulse
@@ -28,8 +26,8 @@ public final class PoolBall extends PointXY {
 		return false;
 	}
 	public void dropPocket(PointXY diff) {
-		pocket = 1;
 		velocity.set(diff);
+		speed *= .8f;
 	}
 	/*
 	public void setRandomSpeed() {

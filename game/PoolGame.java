@@ -2,6 +2,7 @@ package com.vdt.poolgame.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.vdt.poolgame.game.draw.DefaultShader;
 import com.vdt.poolgame.game.draw.PoolBallShader;
@@ -48,21 +49,15 @@ public class PoolGame extends ApplicationAdapter {
 	}
 	@Override
 	public void render () {
-		while(timer.update()) table.update(timer.delta);
+		while(timer.update())
+			table.update(timer.delta);
 		renderScreen();
 		
 	}
 	
 	private void renderScreen() {
-		ShaderProgram.clearScreen();
-		shader.begin();
-		table.draw(shader);
-		control.draw(shader);
-		shader.end();
-		batch.begin();
-		for(PoolBall ball: table.balls) {
-			batch.drawBall(ball);
-		}
+		table.draw(shader, control, batch);
+
 	}
 	
 	@Override

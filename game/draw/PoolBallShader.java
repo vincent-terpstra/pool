@@ -51,6 +51,7 @@ public class PoolBallShader extends ShaderProgram {
 		light = new float[]{x/mag, y/mag, z/mag};
 		
 	}
+
 	private static final String[] 
 			uniforms   = {"u_texture", "u_mat", "u_loc", "u_uv", "u_mat3", "u_light" }, 
 			attributes = {"a_xy" };
@@ -86,7 +87,7 @@ public class PoolBallShader extends ShaderProgram {
 		+   "   	val3 *= u_mat3;"
 		+   "   	if(val3.z < 0.0) val3.x *= -1.0;" //flip the texture if on the bottom of the ball
 		+	"   	gl_FragColor = vec4(texture2D(u_texture, val3.xy * u_uv.z + u_uv.xy ).rgb * "
-		+ 	"			(.05 + diffuse) + pow(diffuse, 16.0), 1.0);"
+		+ 	"			(.04 + diffuse) + pow(diffuse, 16.0) * .6 + .02, 1.0);"
 		+   "   }"
 		+	"}"
 		;
