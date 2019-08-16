@@ -82,6 +82,31 @@ public class PoolTable {
 		}
 	}
 
+	public final void update(float delta) {
+		locked = false;
+		for(PoolBall ball : inPocket){
+			ball.update(delta);
+			checkShift(ball, cornerCheck);
+		}
+		for(PoolBall ball : balls) {
+			locked = ball.update(delta) || locked;
+		}
+		if(locked) {
+			for (int idx = 0; idx < balls.size(); ) {
+				PoolBall current = balls.get(idx);
+				for (int j = idx+1; j < balls.size(); j++)
+					current.checkCollide(balls.get(j));
+
+				if(checkShift(current, edgeCheck)){
+					balls.remove(idx);
+					inPocket.add(current);
+				} else {
+					idx++;
+				}
+			}
+		}
+	}
+
 	public final void predict(DefaultShader shader, PointXY angle, float velocity){
 		if(!locked){
 			PoolBall cue = balls.get(0);
@@ -107,77 +132,59 @@ public class PoolTable {
 					return;
 				}
 			}
-			float
-					shiftX = cue.x() < 0 ? -1 : 1,
-					shiftY = cue.y() < 0 ? -1 : 1;
-			cue.scale(shiftX, shiftY);
-			cue.velocity.scale(shiftX, shiftY);
-
-			corner.checkCollide(cue);
-
-			if ((cue.y() > boundY && (checkCollide(cue, top) || centre.checkCollide(cue))) ||
-					cue.x() > boundX && checkCollide(cue, right)) {
-				cue.scale(shiftX, shiftY);
+			if(checkShift(cue, findCollide))
 				return;
+		}
+	}
+
+	final BoolShift
+			cornerCheck = new BoolShift() {
+		@Override
+		public boolean check(PoolBall ball) {
+			return corner.checkCollide(ball) || centre.checkCollide(ball);
+		}
+	}, 		edgeCheck = new BoolShift() {
+		@Override
+		public boolean check(PoolBall ball) {
+			boolean pocket = corner.checkCollide(ball);
+
+			if (ball.y() > boundY) {
+				checkCollide(ball, top);
+				pocket = centre.checkCollide(ball) || pocket;
 			}
-
-			cue.scale(shiftX, shiftY);
-			cue.velocity.scale(shiftX, shiftY);
+			if(ball.x() > boundX) {
+				checkCollide(ball, right);
+			}
+			return pocket;
 		}
+	},		findCollide = new BoolShift() {
+		@Override
+		public boolean check(PoolBall ball) {
+			return corner.checkCollide(ball) || (ball.y() > boundY && (checkCollide(ball, top) || centre.checkCollide(ball))) ||
+					ball.x() > boundX && checkCollide(ball, right) ;
+		}
+	};
+
+
+
+	private interface BoolShift {
+		boolean check(PoolBall ball);
 	}
 
-	public final void update(float delta) {
-	    locked = false;
-	    for(PoolBall ball : inPocket){
-	    	ball.update(delta);
-			float
-					shiftX = ball.x() < 0 ? -1 : 1,
-					shiftY = ball.y() < 0 ? -1: 1;
-			ball.scale(shiftX, shiftY);
-			ball.velocity.scale(shiftX, shiftY);
-				corner.checkCollide(ball);
-				centre.checkCollide(ball);
-			ball.scale(shiftX, shiftY);
-			ball.velocity.scale(shiftX, shiftY);
-		}
-		for(PoolBall ball : balls) {
-			locked = ball.update(delta) || locked;
-		}
-		if(locked) {
-            for (int idx = 0; idx < balls.size(); ) {
-            	PoolBall current = balls.get(idx);
-            	for (int j = idx+1; j < balls.size(); j++)
-                    current.checkCollide(balls.get(j));
-
-            	if(checkEdge(current)){
-            		balls.remove(idx);
-            		inPocket.add(current);
-				} else {
-            		idx++;
-				}
-            }
-        }
-
-	}
-	private boolean checkEdge(PoolBall current){
+	private boolean checkShift(PoolBall current, BoolShift func){
 		float
 				shiftX = current.x() < 0 ? -1 : 1,
 				shiftY = current.y() < 0 ? -1: 1;
 		current.scale(shiftX, shiftY);
 		current.velocity.scale(shiftX, shiftY);
 
-		boolean pocket = corner.checkCollide(current);
+		boolean check = func.check(current);
 
-		if (current.y() > boundY) {
-			checkCollide(current, top);
-			pocket = centre.checkCollide(current) || pocket;
-		}
-		if(current.x() > boundX) {
-			checkCollide(current, right);
-		}
 		current.scale(shiftX, shiftY);
 		current.velocity.scale(shiftX, shiftY);
-		return pocket;
+
+		return check;
+
 	}
 
 	private boolean checkCollide(PoolBall ball, TableObject[] objs) {
