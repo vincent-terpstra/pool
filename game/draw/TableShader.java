@@ -11,7 +11,7 @@ public class DefaultShader extends ShaderProgram {
 	public final float[] drawPocket;
 	public final float[] circle;
 	public final float[] rect;
-	private final float[] left, side, mask;
+	private final float[] left, side, wood;
 
 	public void draw(float[] draw, PointXY point){
 		draw(draw, point.x(), point.y());
@@ -32,38 +32,8 @@ public class DefaultShader extends ShaderProgram {
 	public void draw(float[] draw, float x, float y){
 		draw(draw, x, y, 1, 0, 1, 1);
 	}
-	public void setScale(float x, float y) {
-		scaleX = x;
-		scaleY = y;
-	}
 
 
-	public void drawCentre() {
-		float b_y = 13.7071f, s_x = 32.7071f;
-		float d_x = width - s_x + 2;
-		float d_y = height - b_y - 2;
-		if (d_y > 0) {
-			draw(mask, 0, b_y + 1.8f, 1, 0, width, d_y);
-		} else if (d_x > 0) {
-			draw(mask, s_x - 2.2f, 0, 0, 1, height, d_x);
-		}
-	}
-
-	public void drawEdge(float x, float y, Pocket corner, PointXY b_right, PointXY s, float b_y) {
-		setScale(x, y);
-		corner.draw(this);
-		draw(side, b_right);
-		draw(side, s.x(), s.y(), 0, 1, -1, 1);
-		draw(left , 0, b_y);
-		/**
-		 for(TableObject e : right) {
-		 e.draw(shader);
-		 }
-		 for(TableObject e : top) {
-		 e.draw(shader);
-		 }
-		 /**/
-	}
 
 	private float scaleX = 1, scaleY = 1;
 	public void draw(float[] draw, float x, float y, float cos, float sin, float scaleX, float scaleY){
@@ -129,21 +99,46 @@ public class DefaultShader extends ShaderProgram {
 
 		left = array.get("left", 0, 4, 0, 0);
 		side = array.get("right", 0, 4, -1, -1);
-		mask = array.get("wood", 2, 2,-.5f, 0);
+		wood = array.get("wood", 2, 2,-.5f, 0);
 
 		resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 	}
 
 
 	public void resize(int _width, int _height){
-
 		height = Math.max(14.8f, (PoolTable.width * 2 - .5f) * (float)_height / (float)_width);
 		width = height * (float)_width / (float)_height;
 		ratio = 2 * width / _width;
+
+	//redraw wooden panels on top or side of the board
 		drawIdx = 0;
-		drawCentre();
-		setScale(-1, -1);
-		drawCentre();
-		setScale(1, 1);
+
+		float b_y = 13.707f, s_x = 32.707f;
+		float d_x = width - s_x + 2;
+		float d_y = height - b_y - 2;
+		if (d_y > 0) {
+			draw(wood, 0, b_y+=1.8f	, 1, 0, width, d_y);
+			draw(wood, 0, -b_y		, 1, 0,-width, -d_y);
+		} else if (d_x > 0) {
+			draw(wood,  s_x-=2.2f, 0, 0, 1,  height, d_x);
+			draw(wood, -s_x		 , 0, 0, 1, -height,-d_x);
+		}
+	}
+
+	public void drawEdge(float x, float y, PointXY corner, PointXY b_right, PointXY s, float b_y) {
+		scaleX = x;
+		scaleY = y;
+		draw(drawPocket, corner);
+		draw(side, b_right);
+		draw(side, s.x(), s.y(), 0, 1, -1, 1);
+		draw(left , 0, b_y);
+		/**
+		 for(TableObject e : right) {
+		 e.draw(shader);
+		 }
+		 for(TableObject e : top) {
+		 e.draw(shader);
+		 }
+		 /**/
 	}
 }
