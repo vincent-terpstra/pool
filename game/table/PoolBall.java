@@ -5,9 +5,13 @@ import com.vdt.poolgame.library.PointXY;
 
 public final class PoolBall extends PointXY {
 	public final PointXY velocity = new PointXY();
-	public final int id;
+	public final Matrix3 matrix = new Matrix3();
+	private int id;
 	private float speed;
-	public final Matrix3 matrix;
+
+	public int id(){
+		return id;
+	}
 
 	public boolean checkCollide(PoolBall ball) {
 		PointXY normal = new PointXY().set(this).move( -1, ball);
@@ -38,6 +42,7 @@ public final class PoolBall extends PointXY {
 	void setSpeed(PointXY _normal, float dt){
 		speed = velocity.scale(speed).move(dt, _normal).normalize();
 	}
+
 	public void setSpeed(PointXY _speed) {
 		speed = velocity.set(_speed).normalize();
 	}
@@ -47,10 +52,11 @@ public final class PoolBall extends PointXY {
 		velocity.set(0,0);
 	}
 
-	public PoolBall(int id, float x, float y) {
+	public void reset(int id, float x, float y){
 		set(x, y);
 		this.id = id;
-		matrix = new Matrix3();
+		matrix.identity();
+		resetSpeed();
 	}
 	
 	public final boolean update(float delta) {
@@ -62,6 +68,15 @@ public final class PoolBall extends PointXY {
 			speed -= 2 * delta;
 		}
 		return speed != 0;
+	}
+
+	public final PointXY positive(){
+		return new PointXY().set( x > 0 ? 1 : -1, y > 0 ? 1 : -1);
+	}
+
+	void scale(PointXY pos){
+		scale(pos.x(), pos.y());
+		velocity.scale(pos.x(), pos.y());
 	}
 
 }

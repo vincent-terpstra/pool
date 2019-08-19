@@ -3,24 +3,19 @@ package com.vdt.poolgame.game.table;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.vdt.poolgame.game.PoolControl;
 import com.vdt.poolgame.game.draw.DefaultShader;
 import com.vdt.poolgame.game.draw.PoolBallShader;
 import com.vdt.poolgame.library.PointXY;
-import com.vdt.poolgame.library.SpriteArray;
 
 public class PoolTable {
 	public static final float height = 7.5f, width = 2 * height;
 	private static final float boundX = width * 2 - 2.5f, boundY = height * 2 - 2.5f;
-	
-	private final float[] left, side, mask;
-	public boolean locked = false;
-	public PoolTable(SpriteArray array){
-		left = array.get("left", 0, 4, 0, 0);
-		side = array.get("right", 0, 4, -1, -1);
-		mask = array.get("mask", 2, 2,-.5f, 0);
 
-		balls.add(new PoolBall(0, -10, 0)); //add cue ball
+	public boolean locked = false;
+	public PoolTable(DefaultShader shader){
+		for(int i = 0; i < 16; i++)
+			balls.add(new PoolBall());
+		balls.get(0).reset(0, -10, 0); //add cue ball
 		rack();
 		centre = new Pocket(1);
 		corner = new Pocket(1,1);
@@ -41,7 +36,7 @@ public class PoolTable {
 			new Edge(p1, p2),
 			c
 		};
-		s_right = p1.clone();
+		PointXY s_right = p1.clone();
 		p3.set(Pocket.radius, width +.5f);
 		final float dx = 2f - sqrt;
 		PointXY p4 = p3.clone().move(dx/2, -dx);
@@ -58,10 +53,16 @@ public class PoolTable {
 			c3
 			
 		};
-		b_y = ((Edge)top[0]).first.y();
-		b_right = p1.clone();
-		
+		float b_y = ((Edge)top[0]).first.y();
+		//b_right = p1.clone();
+		shader.drawEdge(-1, 1, corner, p1, s_right, b_y);
+		shader.drawEdge(1, -1, corner, p1, s_right, b_y);
+		shader.drawEdge(-1, -1,corner, p1, s_right, b_y);
+		shader.drawEdge(1, 1,  corner, p1, s_right, b_y);
+
+		shader.lock();
 	}
+
 	public final List<PoolBall>
 			balls = new ArrayList<PoolBall>(),
 			inPocket = new ArrayList<PoolBall>();
@@ -77,8 +78,9 @@ public class PoolTable {
                 4, 4,	4,-2,	4, 0
         };
 		float delta = (float)Math.sqrt(3);
+		int idx = 1;
 		for(int i = 0; i < rackPos.length;){
-			balls.add(new PoolBall(i / 2 + 1,10 + rackPos[i++] * delta, rackPos[i++]));
+			balls.get(idx++).reset(i / 2 + 1,10 + rackPos[i++] * delta, rackPos[i++]);
 		}
 	}
 
@@ -138,12 +140,13 @@ public class PoolTable {
 	}
 
 	final BoolShift
-			cornerCheck = new BoolShift() {
+	cornerCheck = new BoolShift() {
 		@Override
 		public boolean check(PoolBall ball) {
 			return corner.checkCollide(ball) || centre.checkCollide(ball);
 		}
-	}, 		edgeCheck = new BoolShift() {
+	},
+	edgeCheck = new BoolShift() {
 		@Override
 		public boolean check(PoolBall ball) {
 			boolean pocket = corner.checkCollide(ball);
@@ -155,13 +158,15 @@ public class PoolTable {
 			if(ball.x() > boundX) {
 				checkCollide(ball, right);
 			}
-			return pocket;
+			return pocket; //return true if ball is in a pocket
 		}
-	},		findCollide = new BoolShift() {
+	},
+	findCollide = new BoolShift() {
 		@Override
 		public boolean check(PoolBall ball) {
-			return corner.checkCollide(ball) || (ball.y() > boundY && (checkCollide(ball, top) || centre.checkCollide(ball))) ||
-					ball.x() > boundX && checkCollide(ball, right) ;
+			return corner.checkCollide(ball) ||
+                    (ball.y() > boundY && (checkCollide(ball, top) || centre.checkCollide(ball))) ||
+					(ball.x() > boundX &&  checkCollide(ball, right)) ;
 		}
 	};
 
@@ -172,16 +177,12 @@ public class PoolTable {
 	}
 
 	private boolean checkShift(PoolBall current, BoolShift func){
-		float
-				shiftX = current.x() < 0 ? -1 : 1,
-				shiftY = current.y() < 0 ? -1: 1;
-		current.scale(shiftX, shiftY);
-		current.velocity.scale(shiftX, shiftY);
+		PointXY pos = current.positive();
+		current.scale(pos);
 
 		boolean check = func.check(current);
 
-		current.scale(shiftX, shiftY);
-		current.velocity.scale(shiftX, shiftY);
+		current.scale(pos);
 
 		return check;
 
@@ -189,28 +190,16 @@ public class PoolTable {
 
 	private boolean checkCollide(PoolBall ball, TableObject[] objs) {
 		for(TableObject o : objs) {
-			if(o.checkCollide(ball)) return true;
+			if(o.checkCollide(ball))
+			    return true;
 		}
 		return false;
 	}
-	private final PointXY b_right, s_right;
-	private final float b_y;
 
-	public void draw(DefaultShader shader, PoolControl control, PoolBallShader batch) {
 
-		DefaultShader.clearScreen();
-		shader.begin();
-		drawCentre(shader);
-		shader.setScale(-1,-1);
-		drawCentre(shader);
-		drawEdge(shader, - 1, 1);
-		drawEdge(shader, 1, -1);
-		drawEdge(shader, -1, -1);
-		drawEdge(shader, 1, 1);
-
-		control.draw(shader);
-		shader.end();
+	public void draw(PoolBallShader batch){
 		batch.begin();
+
 		for(PoolBall ball: balls)
 			batch.drawBall(ball);
 
@@ -218,33 +207,6 @@ public class PoolTable {
 			batch.drawBall(ball);
 	}
 
-	private void drawCentre(DefaultShader shader){
-	    float d_y = DefaultShader.Height() - b_y -2;
-	    if(d_y > 0)
-		    shader.draw(mask, 0, b_y + 2, 1, 0, DefaultShader.Width(), d_y);
-	    float d_x = DefaultShader.Width() - s_right.x() + 2;
-	    if(d_x > 0)
-		    shader.draw(mask, s_right.x() - 2 , 0, 0, 1, DefaultShader.Height(), d_x);
-		centre.draw(shader);
-		shader.draw(mask, 0, b_y + 4, 1, 0, 5, 1);
-	}
-
-	
-	private void drawEdge(DefaultShader shader, float x, float y) {
-		shader.setScale(x, y);
-		corner.draw(shader);
-		shader.draw(side, b_right);
-		shader.draw(side, s_right.x(), s_right.y(), 0, 1, -1, 1);
-		shader.draw(left , 0, b_y);
-		/**
-		for(TableObject e : right) {
-			e.draw(shader);
-		}
-		for(TableObject e : top) {
-			e.draw(shader);
-		}
-		/**/
-	}
 	
 	public interface TableObject {
 		boolean checkCollide(PoolBall ball);

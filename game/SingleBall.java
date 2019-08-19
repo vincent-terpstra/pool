@@ -21,7 +21,8 @@ public class SingleBall extends ApplicationAdapter {
         SpriteArray array = new SpriteArray("images");
         array.getTexture().bind();
         batch = new PoolBallShader(array);
-        ball = new PoolBall(10, 0, 0);
+        ball = new PoolBall();
+        ball.reset(10,0,0);
         batch.set(1.2f, 1.2f);
     }
 

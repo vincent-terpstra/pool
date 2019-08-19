@@ -27,8 +27,8 @@ public class PoolGame extends ApplicationAdapter {
 	}
 	@Override public void resume() {
 		Gdx.input.setInputProcessor(control);
-		
 	}
+
 	@Override public void resize(int width, int height){
 		shader.resize(width, height);
 	}
@@ -36,17 +36,23 @@ public class PoolGame extends ApplicationAdapter {
 	@Override
 	public void create () {
 		SpriteArray pool = new SpriteArray("images");
-		table = new PoolTable(pool);
+
+		batch	= new PoolBallShader(pool);
+		shader	= new DefaultShader(pool);
+
+		table = new PoolTable(shader);
 	
 		control  = new PoolControl(table, table.balls.get(0), pool);
 		texture  = pool.getTexture();
 			texture.bind();
-		batch	= new PoolBallShader(pool);
-		shader	= new DefaultShader(pool);
 
 		timer = new TimeStep(.01f);
+
+		DefaultShader.setClearColor(.15f, .45f, 1f);
 		resume();
+
 	}
+
 	@Override
 	public void render () {
 		while(timer.update())
@@ -56,13 +62,17 @@ public class PoolGame extends ApplicationAdapter {
 	}
 	
 	private void renderScreen() {
-		table.draw(shader, control, batch);
-
+		DefaultShader.clearScreen();
+		shader.begin();
+		control.draw(shader);
+		shader.end();
+		table.draw(batch);
 	}
 	
 	@Override
 	public void dispose () {
 		texture.dispose();
+		shader.dispose();
 		batch.dispose();
 	}
 }

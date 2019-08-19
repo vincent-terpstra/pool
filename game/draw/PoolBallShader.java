@@ -11,11 +11,11 @@ public class PoolBallShader extends ShaderProgram {
 		GL20 gl  = Gdx.gl;
 		//supply the location of the ball and of the texture UV to the shader
 		gl.glUniform2f(uniformIDS[2], ball.x(), ball.y());
-		int id = ball.id;
+		int id = ball.id();
 		gl.glUniform3f(uniformIDS[3], poolBalls[id * 2], poolBalls[id*2+1], ballWidth);
 		gl.glUniformMatrix3fv(uniformIDS[4], 1, false, ball.matrix.getMatrix(), 0);
 		//Load vertex for points XY
-		bind(8, null, -1);
+		bind(8, -1);
 	}
 	
 	@Override
@@ -27,11 +27,51 @@ public class PoolBallShader extends ShaderProgram {
 		
 		Gdx.gl.glUniform3f(uniformIDS[5], light[0], light[1], light[2] );
 	}
+
 	private final float[] light;
 	private final float[] poolBalls;
 	private final float ballWidth;
+
 	public PoolBallShader(SpriteArray array) {
-		super(vert, frag, 1, uniforms, attributes, new int[] {2});
+		super(
+			"attribute vec2 a_xy;"
+
+			+	"uniform mat2 u_mat;"
+			+	"uniform vec2 u_loc;"
+
+			+	"varying vec2 v_xy;" //used to draw circles
+
+			+	"void main(){"
+			+	"   v_xy = a_xy;"
+			+	"	gl_Position = vec4(u_mat * (a_xy + u_loc), 1.0, 1.0);"
+			+	"}",
+
+			"varying vec2 v_xy;"
+
+			+	"uniform sampler2D u_texture;"
+			+	"uniform mat3 u_mat3;" //rotation matrix
+			+	"uniform vec3 u_uv;"   //center of the texture & length of the texture
+			+ 	"uniform vec3 u_light;"
+
+			+	"void main(){"
+			+	"   float size = dot(v_xy, v_xy);"
+			+	"	if(size > 1.2) discard;"
+			+   "   else if(size > 1.0) gl_FragColor = vec4(0,0,0,1);" //outline
+			+   "   else {"
+			+   "   	vec3 val3 = vec3(v_xy.xy, sqrt(1.0-size));"
+			+	"   	float diffuse = dot(val3, u_light);"
+			+   "   	val3 *= u_mat3;"
+			+   "   	if(val3.z < 0.0) val3.x *= -1.0;" //flip the texture if on the bottom of the ball
+			+	"   	gl_FragColor = vec4(texture2D(u_texture, val3.xy * u_uv.z + u_uv.xy ).rgb * "
+			+ 	"			(.04 + diffuse) + pow(diffuse, 16.0) * .6 + .02, 1.0);"
+			+   "   }"
+			+	"}",
+			1,
+			new String[]{"u_texture", "u_mat", "u_loc", "u_uv", "u_mat3", "u_light" },
+			new String[]{"a_xy" },
+			new int[] {2}
+		);
+
 		poolBalls = new float[16 * 2];
 		float width = 0;
 		for(int i = 0; i <= 15; i++){
@@ -51,44 +91,4 @@ public class PoolBallShader extends ShaderProgram {
 		light = new float[]{x/mag, y/mag, z/mag};
 		
 	}
-
-	private static final String[] 
-			uniforms   = {"u_texture", "u_mat", "u_loc", "u_uv", "u_mat3", "u_light" }, 
-			attributes = {"a_xy" };
-	private static final String 
-	vert =
-			"attribute vec2 a_xy;"
-			
-		+	"uniform mat2 u_mat;"	
-		+	"uniform vec2 u_loc;"
-		
-		+	"varying vec2 v_xy;" //used to draw circles
-		
-		+	"void main(){"
-		+	"   v_xy = a_xy;"
-		+	"	gl_Position = vec4(u_mat * (a_xy + u_loc), 1.0, 1.0);"
-		+	"}"
-		,
-	frag = 
-			"varying vec2 v_xy;"
-					
-		+	"uniform sampler2D u_texture;"
-		+	"uniform mat3 u_mat3;" //rotation matrix
-		+	"uniform vec3 u_uv;"   //center of the texture & length of the texture
-		+ 	"uniform vec3 u_light;"
-		
-		+	"void main(){"
-		+	"   float size = dot(v_xy, v_xy);"
-		+	"	if(size > 1.2) discard;"
-		+   "   else if(size > 1.0) gl_FragColor = vec4(0,0,0,1);" //outline
-		+   "   else {"
-		+   "   	vec3 val3 = vec3(v_xy.xy, sqrt(1.0-size));"
-		+	"   	float diffuse = dot(val3, u_light);"
-		+   "   	val3 *= u_mat3;"
-		+   "   	if(val3.z < 0.0) val3.x *= -1.0;" //flip the texture if on the bottom of the ball
-		+	"   	gl_FragColor = vec4(texture2D(u_texture, val3.xy * u_uv.z + u_uv.xy ).rgb * "
-		+ 	"			(.04 + diffuse) + pow(diffuse, 16.0) * .6 + .02, 1.0);"
-		+   "   }"
-		+	"}"
-		;
 }
