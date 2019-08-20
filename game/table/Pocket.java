@@ -1,16 +1,9 @@
 package com.vdt.poolgame.game.table;
 
-import com.vdt.poolgame.game.draw.DefaultShader;
 import com.vdt.poolgame.library.PointXY;
 
 public class Pocket extends PointXY {
-	public static final float radius = 2.3f;
-	public Pocket(float x, float y){
-		set(x * (PoolTable.width -.3f)* 2, y * (PoolTable.height - .3f) * 2);
-	}
-	public Pocket(float y) {
-		set(0, y * (PoolTable.height + .5f) * 2);
-	}
+	public static final float RADIUS = 2.3f;
 
 	public final boolean checkCollide(PoolBall ball){
 		PointXY diff = new PointXY().set(this).move(-1, ball);
@@ -18,16 +11,12 @@ public class Pocket extends PointXY {
 		if(rad < .5f){
 		    ball.resetSpeed();
 		    return true;
-        } else if(rad < radius - 1){
+        } else if(rad < RADIUS - 1){
 			ball.dropPocket(diff);
 			return true;
-		} else if(rad < radius){
+		} else if(rad < RADIUS){
 			ball.setSpeed(diff, 1);
 		}
 		return false;
-	}
-	
-	public final void draw(DefaultShader shader) {
-		shader.draw(shader.drawPocket, this );
 	}
 }

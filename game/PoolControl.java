@@ -1,10 +1,12 @@
 package com.vdt.poolgame.game;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
-import com.vdt.poolgame.game.draw.DefaultShader;
+import com.vdt.poolgame.game.draw.TableShader;
 import com.vdt.poolgame.game.table.PoolBall;
 import com.vdt.poolgame.game.table.PoolTable;
 import com.vdt.poolgame.library.PointXY;
+import com.vdt.poolgame.library.ShaderProgram;
 import com.vdt.poolgame.library.SpriteArray;
 
 public class PoolControl implements InputProcessor {
@@ -14,14 +16,16 @@ public class PoolControl implements InputProcessor {
 	private final PointXY down = new PointXY();
 	private final PointXY delta = new PointXY();
 	private float speed;
+
 	public PoolControl(PoolTable table, PoolBall cue, SpriteArray array) {
 		this.cue = cue;
 		this.table = table;
 		this.loop = array.get("loop", 2, 2);
 	}
+
 	private static final float MINSPEED = 10;
 
-	public void draw(DefaultShader shader){
+	public void draw(TableShader shader){
 	    if(touched) {
             shader.drawLine(cue, delta, speed, .2f);
             shader.drawRatio(loop, down.x(), down.y());
@@ -32,29 +36,47 @@ public class PoolControl implements InputProcessor {
         }
 	}
 
-	private boolean touched = false;
+	private boolean touched = false,
+            moveCue = false;
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-		touched = true;
-		down.set(screenX, screenY);
-		delta.set(0,0);
+		float dist = cue.dist(screenX(screenX), screenY(screenY));
+		if(dist < 2){
+			moveCue = true;
+		} else {
+			touched = true;
+			down.set(screenX, screenY);
+			delta.set(0, 0);
+		}
 		return true;
 	}
 
 	@Override
 	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        if( speed > MINSPEED // && table.locked
+        if( !moveCue && speed > MINSPEED // && table.locked
         ){
             cue.setSpeed(delta.scale(speed));
         }
-		touched = false;
+		moveCue = touched = false;
 		return true;
+	}
+
+	private static float screenX(float _x){
+		return (_x /(float)Gdx.graphics.getWidth() - .5f) * ShaderProgram.getWidth() * 2;
+	}
+
+	private static float screenY(float _y){
+		return (_y /(float)Gdx.graphics.getHeight() - .5f) * ShaderProgram.getHeight() * 2;
 	}
 
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
-		speed = delta.set(screenX, screenY).move(-1, down).scale(-.15f).normalize();
+	    if(moveCue && !table.locked){
+			cue.set(screenX(screenX), screenY(screenY));
+        } else {
+            speed = delta.set(screenX, screenY).move(-1, down).scale(-.15f).normalize();
+        }
 		return true;
 	}
 	

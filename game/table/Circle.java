@@ -1,6 +1,6 @@
 package com.vdt.poolgame.game.table;
 
-import com.vdt.poolgame.game.draw.DefaultShader;
+import com.vdt.poolgame.game.draw.TableShader;
 import com.vdt.poolgame.library.PointXY;
 
 public class Circle extends PointXY implements PoolTable.TableObject {
@@ -12,7 +12,7 @@ public class Circle extends PointXY implements PoolTable.TableObject {
         this.dist = (radius + 1) * (radius + 1);
     }
 
-    public void draw(DefaultShader shader){
+    public void draw(TableShader shader){
         shader.drawCircle(this, radius * 2);
     }
 

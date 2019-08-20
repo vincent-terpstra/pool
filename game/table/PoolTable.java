@@ -3,64 +3,51 @@ package com.vdt.poolgame.game.table;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.vdt.poolgame.game.draw.DefaultShader;
+import com.vdt.poolgame.game.draw.SunkDisplay;
+import com.vdt.poolgame.game.draw.TableShader;
 import com.vdt.poolgame.game.draw.PoolBallShader;
 import com.vdt.poolgame.library.PointXY;
+import com.vdt.poolgame.library.SpriteArray;
 
 public class PoolTable {
-	public static final float height = 7.5f, width = 2 * height;
-	private static final float boundX = width * 2 - 2.5f, boundY = height * 2 - 2.5f;
+	private final SunkDisplay sunk;
+
+	public static final float HEIGHT = 18f, WIDTH = 2 * HEIGHT;
+	private static final float boundX = WIDTH - 1.5f, boundY = HEIGHT - 1.5f;
 
 	public boolean locked = false;
-	public PoolTable(DefaultShader shader){
+	public PoolTable(SpriteArray array, TableShader shader){
 		for(int i = 0; i < 16; i++)
 			balls.add(new PoolBall());
-		balls.get(0).reset(0, -10, 0); //add cue ball
+		balls.get(0).reset(0, -HEIGHT, 0); //add cue ball
 		rack();
-		centre = new Pocket(1);
-		corner = new Pocket(1,1);
 
+		centre = new Pocket();
+		corner = new Pocket();
+
+		corner.set(WIDTH +.6f, HEIGHT + .6f);
+		centre.set(0, HEIGHT + Pocket.RADIUS);
+
+		//MAGIC NUMBERS for the collision edge objects (Table is unchanging)
 		final float rad = 1;
-		final float sqrt = (float)Math.sqrt(2) * rad / 2;
-		
-		final float p_rsqrt = Pocket.radius * sqrt;
-		final float diff = p_rsqrt + 1;
-		PointXY p1 = new PointXY().set(width * 2 + p_rsqrt, height * 2 - p_rsqrt);
-		PointXY p2 = p1.clone().move(-diff, -diff);
-		Circle c = (Circle)new Circle(rad).set(p2).move(sqrt, -sqrt);
-		PointXY p3 = new PointXY().set(c).move(-rad,  0);
-		float delta = 4 - (p1.x() - p3.x());
-		p1.move(delta, delta);
 		right = new TableObject[] {
-			new Edge(p3.clone(), p3.move(0, -width)),
-			new Edge(p1, p2),
-			c
+			new Edge(36.0f, 14.3331f, 36.0f, -2),
+			new Edge(40.0f, 18.747316f, 36.2929f, 15.04021f),
+			(Circle)new Circle(rad).set(37, 14.3331f)
 		};
-		PointXY s_right = p1.clone();
-		p3.set(Pocket.radius, width +.5f);
-		final float dx = 2f - sqrt;
-		PointXY p4 = p3.clone().move(dx/2, -dx);
-		p1.move(-width, width).invert();
-		p2.move(-width, width).invert();
-		Circle 
-			c2 = (Circle)new Circle(rad).set(p4).move((float)Math.sqrt(3)/2, .5f),
-			c3 = (Circle)new Circle(rad).set(c).move(-width, width).invert();
-		top = new TableObject[] {
-			new Edge(c2.clone().move(0, -rad), c3.clone().move(0, -rad)),
-			new Edge(p1, p2),
-			new Edge(p3, p4),
-			c2,
-			c3
-			
-		};
-		float b_y = ((Edge)top[0]).first.y();
-		//b_right = p1.clone();
-		shader.drawEdge(-1, 1, corner, p1, s_right, b_y);
-		shader.drawEdge(1, -1, corner, p1, s_right, b_y);
-		shader.drawEdge(-1, -1,corner, p1, s_right, b_y);
-		shader.drawEdge(1, 1,  corner, p1, s_right, b_y);
 
-		shader.lock();
+		top = new TableObject[] {
+			new Edge(3.8f, 18.0f, 32.3f, 18f),
+			new Edge(36.75f, 22.0f, 33.0f, 18.3f),
+			new Edge(2.3f, 19.8f, 2.95f, 18.5f),
+			(Circle)new Circle(rad).set(3.81f	, 19),
+			(Circle)new Circle(rad).set(32.33f, 19)
+		};
+		//add edges to the shader buffer to draw the table
+		shader.drawEdge(array, corner);
+		//only need to add these edges once
+
+		sunk = new SunkDisplay(array);
 	}
 
 	public final List<PoolBall>
@@ -73,14 +60,13 @@ public class PoolTable {
         float[] rackPos = {
                 0, 0,	1, 1,	2,-2,	3, 3,
                 3,-1,	4,-4,	4, 2,
-                2, 0,
-                1,-1,	2, 2,	3,-3,	3, 1,
-                4, 4,	4,-2,	4, 0
+                2, 0,	//8 BALL
+                4, 0,	4,-2,  3,-3,	1,-1,
+				2, 2, 	4, 4, 	3, 1,
         };
 		float delta = (float)Math.sqrt(3);
-		int idx = 1;
 		for(int i = 0; i < rackPos.length;){
-			balls.get(idx++).reset(i / 2 + 1,10 + rackPos[i++] * delta, rackPos[i++]);
+			balls.get(i/2 +1).reset(i / 2 + 1,HEIGHT + rackPos[i++] * delta, rackPos[i++]);
 		}
 	}
 
@@ -100,8 +86,13 @@ public class PoolTable {
 					current.checkCollide(balls.get(j));
 
 				if(checkShift(current, edgeCheck)){
-					balls.remove(idx);
-					inPocket.add(current);
+					if(current.id() != 0) {
+						balls.remove(idx);
+						inPocket.add(current);
+						sunk.add(current.id());
+					} else {
+						idx++;
+					}
 				} else {
 					idx++;
 				}
@@ -109,22 +100,21 @@ public class PoolTable {
 		}
 	}
 
-	public final void predict(DefaultShader shader, PointXY angle, float velocity){
+	public final void predict(TableShader shader, PointXY angle, float velocity){
 		if(!locked){
 			PoolBall cue = balls.get(0);
 			PointXY tmp = new PointXY().set(cue);
 			cue.setSpeed(new PointXY().set(angle).scale(velocity));
 
-			findCollision(shader, cue);
+			findCollision( cue);
 
 			shader.drawCircle(cue, 2f);
 			cue.resetSpeed();
 			cue.set(tmp);
 		}
-
 	}
 
-	private final void findCollision(DefaultShader shader, PoolBall cue){
+	private final void findCollision(PoolBall cue){
 		for(int i = 0; i < 100; i++){
 			cue.update(.02f);
 			for(int j = 1; j < balls.size(); j++){
@@ -139,7 +129,11 @@ public class PoolTable {
 		}
 	}
 
-	final BoolShift
+	private interface BoolShift {
+		boolean check(PoolBall ball);
+	}
+
+	private final BoolShift
 	cornerCheck = new BoolShift() {
 		@Override
 		public boolean check(PoolBall ball) {
@@ -170,12 +164,6 @@ public class PoolTable {
 		}
 	};
 
-
-
-	private interface BoolShift {
-		boolean check(PoolBall ball);
-	}
-
 	private boolean checkShift(PoolBall current, BoolShift func){
 		PointXY pos = current.positive();
 		current.scale(pos);
@@ -185,7 +173,6 @@ public class PoolTable {
 		current.scale(pos);
 
 		return check;
-
 	}
 
 	private boolean checkCollide(PoolBall ball, TableObject[] objs) {
@@ -197,20 +184,34 @@ public class PoolTable {
 	}
 
 
-	public void draw(PoolBallShader batch){
+	public void draw(PoolBallShader batch, TableShader shader){
+		/**
+			shader.drawCircle(centre, Pocket.RADIUS * 2);
+			shader.drawCircle(corner, Pocket.RADIUS * 2);
+		/**
+		for(TableObject obj : top)
+			obj.draw(shader);
+
+		for(TableObject obj : right)
+			obj.draw(shader);
+		/**/
+
+		sunk.draw(shader);
+		shader.end();
 		batch.begin();
+		for(PoolBall ball: inPocket)
+			batch.drawBall(ball);
 
 		for(PoolBall ball: balls)
 			batch.drawBall(ball);
 
-		for(PoolBall ball: inPocket)
-			batch.drawBall(ball);
+
 	}
 
 	
 	public interface TableObject {
 		boolean checkCollide(PoolBall ball);
-		void draw(DefaultShader shader);
+		void draw(TableShader shader);
 	}
 	
 }

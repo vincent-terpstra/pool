@@ -81,11 +81,15 @@ public class PoolBallShader extends ShaderProgram {
 			width = r.u2 - poolBalls[2*i];
 		}
 		this.ballWidth = width;
+
 		//create a fixed amount of vertices set to the square to display
 		float r = 1.2f;
 		vertices.put(new float[]{-r,-r, -r, r, r,r, r, -r});
 		vertices.position(0);
+
 		indices.position(0).limit(6);
+
+		//light source
 		final float x = 2, y = 5, z = 10;
 		float mag = (float)Math.sqrt(x * x + y * y + z * z);
 		light = new float[]{x/mag, y/mag, z/mag};

@@ -2,20 +2,17 @@ package com.vdt.poolgame.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
-import com.vdt.poolgame.game.draw.DefaultShader;
+import com.vdt.poolgame.game.draw.TableShader;
 import com.vdt.poolgame.game.draw.PoolBallShader;
-import com.vdt.poolgame.game.table.PoolBall;
 import com.vdt.poolgame.game.table.PoolTable;
-import com.vdt.poolgame.library.ShaderProgram;
 import com.vdt.poolgame.library.SpriteArray;
 import com.vdt.poolgame.library.TimeStep;
 
 public class PoolGame extends ApplicationAdapter {
 	private PoolBallShader batch;
 
-	private DefaultShader shader;
+	private TableShader shader;
 	private Texture texture;
 	private PoolControl control;
 	private PoolTable table;
@@ -38,9 +35,9 @@ public class PoolGame extends ApplicationAdapter {
 		SpriteArray pool = new SpriteArray("images");
 
 		batch	= new PoolBallShader(pool);
-		shader	= new DefaultShader(pool);
+		shader	= new TableShader(pool);
 
-		table = new PoolTable(shader);
+		table = new PoolTable(pool, shader);
 	
 		control  = new PoolControl(table, table.balls.get(0), pool);
 		texture  = pool.getTexture();
@@ -48,7 +45,7 @@ public class PoolGame extends ApplicationAdapter {
 
 		timer = new TimeStep(.01f);
 
-		DefaultShader.setClearColor(.15f, .45f, 1f);
+		TableShader.setClearColor(.15f, .45f, 1f);
 		resume();
 
 	}
@@ -62,11 +59,10 @@ public class PoolGame extends ApplicationAdapter {
 	}
 	
 	private void renderScreen() {
-		DefaultShader.clearScreen();
+		TableShader.clearScreen();
 		shader.begin();
 		control.draw(shader);
-		shader.end();
-		table.draw(batch);
+		table.draw(batch, shader);
 	}
 	
 	@Override

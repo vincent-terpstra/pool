@@ -1,6 +1,6 @@
 package com.vdt.poolgame.game.table;
 
-import com.vdt.poolgame.game.draw.DefaultShader;
+import com.vdt.poolgame.game.draw.TableShader;
 import com.vdt.poolgame.library.PointXY;
 
 public class Edge implements PoolTable.TableObject {
@@ -15,7 +15,7 @@ public class Edge implements PoolTable.TableObject {
         length = angle.normalize();
     }
 
-    public void draw(DefaultShader shader){
+    public void draw(TableShader shader){
         shader.drawLine(first, angle, length, .1f);
     //	shader.drawCircle(first, .5f);
     //	shader.drawCircle(first.clone().move(length, angle), .5f);
