@@ -71,9 +71,7 @@ public class PoolControl implements InputProcessor {
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
 	    if(moveCue && !table.locked){
-	    	float x = screenX(screenX), y =screenY(screenY);
-	    	if(Math.abs(x) < PoolTable.WIDTH - 1 && Math.abs( y) < PoolTable.HEIGHT - 1)
-				cue.set(x, y);
+	    	table.moveCue(screenX(screenX), screenY(screenY));
         } else {
             speed = delta.set(screenX, screenY).move(-1, down).scale(-.15f).normalize();
         }

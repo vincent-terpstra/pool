@@ -13,7 +13,7 @@ public class PoolTable {
 	private final SunkDisplay sunk;
 
 	public static final float HEIGHT = 18f, WIDTH = 2 * HEIGHT;
-	private static final float boundX = WIDTH - 1.5f, boundY = HEIGHT - 1.5f;
+	private static final float boundX = WIDTH - 1, boundY = HEIGHT - 1;
 
 	public boolean locked = false;
 	public PoolTable(SpriteArray array, TableShader shader){
@@ -113,6 +113,23 @@ public class PoolTable {
 			cue.set(tmp);
 		}
 	}
+
+	public final void moveCue(float x, float y){
+		if(locked) return;
+
+        if(Math.abs(x) < boundX && Math.abs( y) < boundY) {
+        	PoolBall cue = balls.get(0);
+        	PointXY tmp = cue.clone();
+        	cue.set(x, y);
+			for(int i = 1; i < balls.size(); i++){
+				if(balls.get(i).checkCollide(balls.get(0))) {
+						cue.set(tmp);
+						return;
+					}
+			}
+
+		}
+    }
 
 	private final void findCollision(PoolBall cue){
 		for(int i = 0; i < 100; i++){
