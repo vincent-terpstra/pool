@@ -41,8 +41,7 @@ public class PoolControl implements InputProcessor {
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-		float dist = cue.dist(screenX(screenX), screenY(screenY));
-		if(dist < 2){
+		if( cue.range(screenX(screenX), screenY(screenY), 2) &&  !table.locked){
 			moveCue = true;
 		} else {
 			touched = true;
@@ -61,7 +60,6 @@ public class PoolControl implements InputProcessor {
 		moveCue = touched = false;
 		return true;
 	}
-
 	private static float screenX(float _x){
 		return (_x /(float)Gdx.graphics.getWidth() - .5f) * ShaderProgram.getWidth() * 2;
 	}
@@ -73,7 +71,9 @@ public class PoolControl implements InputProcessor {
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
 	    if(moveCue && !table.locked){
-			cue.set(screenX(screenX), screenY(screenY));
+	    	float x = screenX(screenX), y =screenY(screenY);
+	    	if(Math.abs(x) < PoolTable.WIDTH - 1 && Math.abs( y) < PoolTable.HEIGHT - 1)
+				cue.set(x, y);
         } else {
             speed = delta.set(screenX, screenY).move(-1, down).scale(-.15f).normalize();
         }
