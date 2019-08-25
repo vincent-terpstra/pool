@@ -9,17 +9,19 @@ import com.vdt.poolgame.game.draw.PoolBallShader;
 import com.vdt.poolgame.library.PointXY;
 import com.vdt.poolgame.library.SpriteArray;
 
-public class PoolTable {
+public final class PoolTable {
 	private final SunkDisplay sunk;
 
 	public static final float HEIGHT = 18f, WIDTH = 2 * HEIGHT;
 	private static final float boundX = WIDTH - 1, boundY = HEIGHT - 1;
 
-	public boolean locked = false;
+	private boolean locked = false;
+
+
 	public PoolTable(SpriteArray array, TableShader shader){
 		for(int i = 0; i < 16; i++)
 			balls.add(new PoolBall());
-		balls.get(0).reset(0, -HEIGHT, 0); //add cue ball
+
 		rack();
 
 		centre = new Pocket();
@@ -56,7 +58,7 @@ public class PoolTable {
 	private final Pocket centre, corner;
 	private final TableObject[] right, top;
 	
-	private void rack(){
+	public void rack(){
         float[] rackPos = {
                 0, 0,	1, 1,	2,-2,	3, 3,
                 3,-1,	4,-4,	4, 2,
@@ -65,6 +67,14 @@ public class PoolTable {
 				2, 2, 	4, 4, 	3, 1,
         };
 		float delta = (float)Math.sqrt(3);
+
+		while(inPocket.size() > 0){
+			balls.add(inPocket.remove(0));
+		}
+
+
+		balls.get(0).reset(0, -HEIGHT, 0); //add cue ball
+
 		for(int i = 0; i < rackPos.length;){
 			balls.get(i/2 +1).reset(i / 2 + 1,HEIGHT + rackPos[i++] * delta, rackPos[i++]);
 		}
@@ -114,6 +124,14 @@ public class PoolTable {
 		}
 	}
 
+	public final boolean isLocked(){
+	    return locked;
+    }
+
+	public final boolean canMoveCue(){
+	    return !locked;
+    }
+
 	public final void moveCue(float x, float y){
 		if(locked) return;
 
@@ -122,7 +140,7 @@ public class PoolTable {
         	PointXY tmp = cue.clone();
         	cue.set(x, y);
 			for(int i = 1; i < balls.size(); i++){
-				if(balls.get(i).checkCollide(balls.get(0))) {
+				if(balls.get(i).checkCollide(cue)) {
 						cue.set(tmp);
 						return;
 					}

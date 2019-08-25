@@ -16,6 +16,9 @@ public class PoolControl implements InputProcessor {
 	private final PointXY down = new PointXY();
 	private final PointXY delta = new PointXY();
 	private float speed;
+	private boolean
+			touched = false,
+			moveCue = false;
 
 	public PoolControl(PoolTable table, PoolBall cue, SpriteArray array) {
 		this.cue = cue;
@@ -36,12 +39,13 @@ public class PoolControl implements InputProcessor {
         }
 	}
 
-	private boolean touched = false,
-            moveCue = false;
+
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-		if( cue.range(screenX(screenX), screenY(screenY), 2) &&  !table.locked){
+		if(button == 1) {
+			table.rack();
+		} else if( table.canMoveCue() && cue.range(screenX(screenX), screenY(screenY), 4) ){
 			moveCue = true;
 		} else {
 			touched = true;
@@ -53,24 +57,25 @@ public class PoolControl implements InputProcessor {
 
 	@Override
 	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        if( !moveCue && speed > MINSPEED // && table.locked
+        if( !moveCue && speed > MINSPEED && touched // && table.locked
         ){
             cue.setSpeed(delta.scale(speed));
         }
 		moveCue = touched = false;
 		return true;
 	}
-	private static float screenX(float _x){
+
+	private static final float screenX(float _x){
 		return (_x /(float)Gdx.graphics.getWidth() - .5f) * ShaderProgram.getWidth() * 2;
 	}
 
-	private static float screenY(float _y){
+	private static final float screenY(float _y){
 		return (_y /(float)Gdx.graphics.getHeight() - .5f) * ShaderProgram.getHeight() * 2;
 	}
 
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
-	    if(moveCue && !table.locked){
+	    if(moveCue && !table.isLocked()){
 	    	table.moveCue(screenX(screenX), screenY(screenY));
         } else {
             speed = delta.set(screenX, screenY).move(-1, down).scale(-.15f).normalize();
