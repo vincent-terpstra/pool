@@ -13,7 +13,7 @@ public class TableShader extends ShaderProgram {
 	private final float[]  wood;
 
 	public void draw(float[] draw, PointXY point){
-		draw(draw, point.x(), point.y());
+	    draw(draw, point.x(), point.y());
 	}
 
 	public void drawRatio(float[] draw, float x, float y){
@@ -29,16 +29,23 @@ public class TableShader extends ShaderProgram {
 	}
 
 	public void draw(float[] draw, float x, float y){
-		draw(draw, x, y, 1, 0, 1, 1);
+	    draw(draw, x, y, 1, 0, 1, 1);
 	}
 
-	public void draw(float[] draw, float x, float y, float cos, float sin, float scaleX, float scaleY){
+	public void draw(float[] draw, float x, float y, float scale){
+	    draw(draw, x, y, 1, 0, scale, scale);
+    }
+
+
+	private void draw(float[] draw, float x, float y, float cos, float sin, float scaleX, float scaleY){
 		if(drawIdx + draw.length > drawValues.length) end();
 		for(int i = 0; i < draw.length; ){
 			final float drawX = draw[i++] * scaleX;
 			final float drawY = draw[i++] * scaleY;
+			//XY
 			drawValues[drawIdx++] = drawX * cos + drawY * sin + x;
 			drawValues[drawIdx++] = drawY * cos - drawX * sin + y;
+			//UV
 			drawValues[drawIdx++] = draw[i++];
 			drawValues[drawIdx++] = draw[i++];
 		}

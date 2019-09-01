@@ -15,14 +15,12 @@ public final class PoolTable {
 	public static final float HEIGHT = 18f, WIDTH = 2 * HEIGHT;
 	private static final float boundX = WIDTH - 1, boundY = HEIGHT - 1;
 
-	private boolean locked = false;
+	private boolean locked = false, moveCue = false;
 
 
 	public PoolTable(SpriteArray array, TableShader shader){
 		for(int i = 0; i < 16; i++)
 			balls.add(new PoolBall());
-
-		rack();
 
 		centre = new Pocket();
 		corner = new Pocket();
@@ -35,6 +33,7 @@ public final class PoolTable {
 		right = new TableObject[] {
 			new Edge(36.0f, 14.3331f, 36.0f, -2),
 			new Edge(40.0f, 18.747316f, 36.2929f, 15.04021f),
+
 			(Circle)new Circle(rad).set(37, 14.3331f)
 		};
 
@@ -42,6 +41,7 @@ public final class PoolTable {
 			new Edge(3.8f, 18.0f, 32.3f, 18f),
 			new Edge(36.75f, 22.0f, 33.0f, 18.3f),
 			new Edge(2.3f, 19.8f, 2.95f, 18.5f),
+
 			(Circle)new Circle(rad).set(3.81f	, 19),
 			(Circle)new Circle(rad).set(32.33f, 19)
 		};
@@ -50,6 +50,8 @@ public final class PoolTable {
 		//only need to add these edges once
 
 		sunk = new SunkDisplay(array);
+
+		rack();
 	}
 
 	public final List<PoolBall>
@@ -59,6 +61,8 @@ public final class PoolTable {
 	private final TableObject[] right, top;
 	
 	public void rack(){
+		moveCue = kitchen = true; //can move the cue ball
+		sunk.reset();
         float[] rackPos = {
                 0, 0,	1, 1,	2,-2,	3, 3,
                 3,-1,	4,-4,	4, 2,
@@ -101,6 +105,8 @@ public final class PoolTable {
 						inPocket.add(current);
 						sunk.add(current.id());
 					} else {
+						//Cue ball in pocket
+						moveCue = true;
 						idx++;
 					}
 				} else {
@@ -110,11 +116,11 @@ public final class PoolTable {
 		}
 	}
 
-	public final void predict(TableShader shader, PointXY angle, float velocity){
+	public final void predict(TableShader shader, PointXY  velocity){
 		if(!locked){
 			PoolBall cue = balls.get(0);
 			PointXY tmp = new PointXY().set(cue);
-			cue.setSpeed(new PointXY().set(angle).scale(velocity));
+			cue.setSpeed(velocity);
 
 			findCollision( cue);
 
@@ -128,14 +134,14 @@ public final class PoolTable {
 	    return locked;
     }
 
-	public final boolean canMoveCue(){
-	    return !locked;
+	public final boolean canMoveCue(float x, float y){
+	    return moveCue && balls.get(0).range(x, y, 4);
     }
 
 	public final void moveCue(float x, float y){
-		if(locked) return;
+		if(!moveCue || locked) return;
 
-        if(Math.abs(x) < boundX && Math.abs( y) < boundY) {
+        if(Math.abs(x) < boundX && Math.abs( y) < boundY && (!kitchen || x < -HEIGHT)) {
         	PoolBall cue = balls.get(0);
         	PointXY tmp = cue.clone();
         	cue.set(x, y);
@@ -148,10 +154,18 @@ public final class PoolTable {
 
 		}
     }
+    boolean kitchen = true; // ball must be in kitchen
+
+    public final void fireCue(PointXY speed){
+		balls.get(0).setSpeed(speed);
+
+		//can no longer move the cue
+		moveCue = kitchen = false;
+	}
 
 	private final void findCollision(PoolBall cue){
 		for(int i = 0; i < 100; i++){
-			cue.update(.02f);
+			cue.update(.01f);
 			for(int j = 1; j < balls.size(); j++){
 				PoolBall at = balls.get(j);
 				if(at.checkCollide(cue)){
@@ -230,6 +244,12 @@ public final class PoolTable {
 		for(TableObject obj : right)
 			obj.draw(shader);
 		/**/
+		if(moveCue)
+			shader.drawCircle(balls.get(0), 4f);
+
+		if(locked){
+			shader.draw(shader.circle, - (WIDTH - 4), HEIGHT - 4, 6);
+		}
 
 		sunk.draw(shader);
 		shader.end();
@@ -239,7 +259,6 @@ public final class PoolTable {
 
 		for(PoolBall ball: balls)
 			batch.drawBall(ball);
-
 
 	}
 

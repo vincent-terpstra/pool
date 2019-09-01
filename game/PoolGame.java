@@ -18,7 +18,12 @@ public class PoolGame extends ApplicationAdapter {
 	private PoolTable table;
 
 	private TimeStep timer;
-	
+
+	public PoolControl getControl(){
+		return control;
+	}
+
+
 	@Override public void pause() {
 		Gdx.input.setInputProcessor(null);
 	}

@@ -20,11 +20,7 @@ public class PoolBallShader extends ShaderProgram {
 	
 	@Override
 	protected final void derivedBegin(){
-		//create the board (centered at 0,0)
-		float[] matrix2 =  { 1/width, 0,
-							 0,-1/height };
-		Gdx.gl.glUniformMatrix2fv( uniformIDS[1], 1, false, matrix2, 0);
-		
+
 		Gdx.gl.glUniform3f(uniformIDS[5], light[0], light[1], light[2] );
 	}
 
