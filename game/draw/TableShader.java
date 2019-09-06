@@ -8,20 +8,15 @@ import com.vdt.poolgame.library.ShaderProgram;
 import com.vdt.poolgame.library.SpriteArray;
 
 public class TableShader extends ShaderProgram {
-	public final float[] circle;
-	public final float[] rect;
-	private final float[]  wood;
+	public final float[] circle, loop, lock, timer, arrow, circle2;
+	private final float[]  wood, rect;
 
-	public void draw(float[] draw, PointXY point){
-	    draw(draw, point.x(), point.y());
+	public void draw(float[] draw, PointXY point, float diameter){
+		draw(draw, point.x(), point.y(), 1, 0, diameter, diameter);
 	}
 
-	public void drawRatio(float[] draw, float x, float y){
-		draw(draw, x * ratio - width, y * ratio - height);
-	}
-
-	public void drawCircle(PointXY point, float diameter){
-		draw(circle, point.x(), point.y(), diameter, 0, 1, 1);
+	public void draw(float[] draw, PointXY point, PointXY angle, float diameter){
+		draw(draw, point.x(), point.y(), angle.x(), angle.y(), diameter, diameter);
 	}
 
 	public void drawLine(PointXY point, PointXY angle, float length, float scaleY){
@@ -97,16 +92,21 @@ public class TableShader extends ShaderProgram {
 
 
 		circle = array.get("circle");
-		rect = array.get("rect",1,1, -1, 0);
+		circle2 = array.get("circle2");
+		rect = array.get("rect",1,1, -1, -.5f);
 
 		wood = array.get("wood", 2, 2,-.5f, 0);
+		loop = array.get("loop", 2, 2);
+        lock = array.get("lock", 1, 0);
+        timer = array.get("timer", 1, 0);
+        arrow = array.get("arrow", 1, 1);
 
 		resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 	}
 
 
 	public void resize(int _width, int _height){
-		height = Math.max(PoolTable.HEIGHT + .8f, (PoolTable.WIDTH + .8f ) * (float)_height / (float)_width);
+		height = Math.max(PoolTable.HEIGHT + 1f, (PoolTable.WIDTH + 1f ) * (float)_height / (float)_width);
 		width = height * (float)_width / (float)_height;
 		ratio = 2 * width / _width;
 

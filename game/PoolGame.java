@@ -48,7 +48,7 @@ public class PoolGame extends ApplicationAdapter {
 		texture  = pool.getTexture();
 			texture.bind();
 
-		timer = new TimeStep(.01f);
+		timer = new TimeStep(.005f);
 
 		TableShader.setClearColor(.15f, .45f, 1f);
 		resume();

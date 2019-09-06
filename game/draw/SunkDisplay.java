@@ -26,7 +26,11 @@ public class SunkDisplay {
         final float space = 5;
         float x = -(idx -1) * space * .5f;
         for(int j = 0; j < idx; j++) {
-            shader.draw(sunkList[j] > 8 ? stripe : solid, x, 0, space);
+            int idx = sunkList[j];
+            float[] draw = idx > 8 ? stripe : solid;
+            if(idx == 8)
+                draw = shader.circle;
+            shader.draw(draw, x, 0, space);
             x += space;
         }
     }

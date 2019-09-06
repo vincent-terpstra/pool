@@ -13,7 +13,7 @@ public class Circle extends PointXY implements PoolTable.TableObject {
     }
 
     public void draw(TableShader shader){
-        shader.drawCircle(this, radius * 2);
+        shader.draw(shader.circle, this, radius * 2);
     }
 
     public boolean checkCollide(PoolBall ball){

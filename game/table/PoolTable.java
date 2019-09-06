@@ -7,6 +7,7 @@ import com.vdt.poolgame.game.draw.SunkDisplay;
 import com.vdt.poolgame.game.draw.TableShader;
 import com.vdt.poolgame.game.draw.PoolBallShader;
 import com.vdt.poolgame.library.PointXY;
+import com.vdt.poolgame.library.ShaderProgram;
 import com.vdt.poolgame.library.SpriteArray;
 
 public final class PoolTable {
@@ -15,7 +16,7 @@ public final class PoolTable {
 	public static final float HEIGHT = 18f, WIDTH = 2 * HEIGHT;
 	private static final float boundX = WIDTH - 1, boundY = HEIGHT - 1;
 
-	private boolean locked = false, moveCue = false;
+	private boolean locked = false, cuePocket = false;
 
 
 	public PoolTable(SpriteArray array, TableShader shader){
@@ -61,14 +62,14 @@ public final class PoolTable {
 	private final TableObject[] right, top;
 	
 	public void rack(){
-		moveCue = kitchen = true; //can move the cue ball
+	    kitchen = true; //can move the cue ball
 		sunk.reset();
         float[] rackPos = {
-                0, 0,	1, 1,	2,-2,	3, 3,
-                3,-1,	4,-4,	4, 2,
+                0, 0,	1, 1,	2,-2,	4, 2,
+                3,-1,	4,-4,	3, 3,
                 2, 0,	//8 BALL
-                4, 0,	4,-2,  3,-3,	1,-1,
-				2, 2, 	4, 4, 	3, 1,
+                4, 0,	4,-2,  3, 1,	1,-1,
+				2, 2, 	4, 4, 	3, -3,
         };
 		float delta = (float)Math.sqrt(3);
 
@@ -96,8 +97,11 @@ public final class PoolTable {
 		if(locked) {
 			for (int idx = 0; idx < balls.size(); ) {
 				PoolBall current = balls.get(idx);
-				for (int j = idx+1; j < balls.size(); j++)
-					current.checkCollide(balls.get(j));
+				//prevent the cue from colliding while in pocket
+				if(idx != 0 || !cuePocket) {
+					for (int j = idx + 1; j < balls.size(); j++)
+						current.checkCollide(balls.get(j));
+				}
 
 				if(checkShift(current, edgeCheck)){
 					if(current.id() != 0) {
@@ -106,7 +110,7 @@ public final class PoolTable {
 						sunk.add(current.id());
 					} else {
 						//Cue ball in pocket
-						moveCue = true;
+						cuePocket = true;
 						idx++;
 					}
 				} else {
@@ -124,7 +128,7 @@ public final class PoolTable {
 
 			findCollision( cue);
 
-			shader.drawCircle(cue, 2f);
+			shader.draw(shader.circle, cue, 2f);
 			cue.resetSpeed();
 			cue.set(tmp);
 		}
@@ -135,13 +139,14 @@ public final class PoolTable {
     }
 
 	public final boolean canMoveCue(float x, float y){
-	    return moveCue && balls.get(0).range(x, y, 4);
+	    return !locked && balls.get(0).range(x, y, 4);
     }
 
 	public final void moveCue(float x, float y){
-		if(!moveCue || locked) return;
+		if( locked ) return;
 
         if(Math.abs(x) < boundX && Math.abs( y) < boundY && (!kitchen || x < -HEIGHT)) {
+        	cuePocket = false;
         	PoolBall cue = balls.get(0);
         	PointXY tmp = cue.clone();
         	cue.set(x, y);
@@ -154,13 +159,19 @@ public final class PoolTable {
 
 		}
     }
+
+    public boolean cuePocket(){
+		return cuePocket;
+	}
+
     boolean kitchen = true; // ball must be in kitchen
 
     public final void fireCue(PointXY speed){
+    	if(locked || cuePocket) return;
+
 		balls.get(0).setSpeed(speed);
 
-		//can no longer move the cue
-		moveCue = kitchen = false;
+		kitchen = false;
 	}
 
 	private final void findCollision(PoolBall cue){
@@ -197,9 +208,17 @@ public final class PoolTable {
 			if (ball.y() > boundY) {
 				checkCollide(ball, top);
 				pocket = centre.checkCollide(ball) || pocket;
+				if(ball.y() > ShaderProgram.getHeight()) {
+					ball.resetSpeed();
+					ball.set(ball.x(), ShaderProgram.getHeight());
+				}
 			}
 			if(ball.x() > boundX) {
-				checkCollide(ball, right);
+					checkCollide(ball, right);
+				if (ball.x() > ShaderProgram.getWidth()) {
+					ball.resetSpeed();
+					ball.set(ShaderProgram.getWidth(), ball.y());
+				}
 			}
 			return pocket; //return true if ball is in a pocket
 		}
@@ -244,12 +263,7 @@ public final class PoolTable {
 		for(TableObject obj : right)
 			obj.draw(shader);
 		/**/
-		if(moveCue)
-			shader.drawCircle(balls.get(0), 4f);
 
-		if(locked){
-			shader.draw(shader.circle, - (WIDTH - 4), HEIGHT - 4, 6);
-		}
 
 		sunk.draw(shader);
 		shader.end();
