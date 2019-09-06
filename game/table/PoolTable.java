@@ -111,7 +111,8 @@ public final class PoolTable {
 						balls.remove(idx);
 						inPocket.add(current);
 						sunk.add(current.id());
-						showType = current.id() > 8 ? 2 : 1;
+						if(showType == 0)
+							showType = current.id() > 8 ? 2 : 1;
 					} else {
 						//Cue ball in pocket
 						cuePocket = true;
@@ -149,19 +150,18 @@ public final class PoolTable {
 	public final void moveCue(float x, float y){
 		if( locked ) return;
 
-        if(Math.abs(x) < boundX && Math.abs( y) < boundY && (!kitchen || x < -HEIGHT)) {
-        	cuePocket = false;
-        	PoolBall cue = balls.get(0);
-        	PointXY tmp = cue.clone();
-        	cue.set(x, y);
-			for(int i = 1; i < balls.size(); i++){
-				if(balls.get(i).checkCollide(cue)) {
-						cue.set(tmp);
-						return;
-					}
-			}
-
+		cuePocket = false;
+		PoolBall cue = balls.get(0);
+		PointXY tmp = cue.clone();
+		cue.set(x, y);
+		for(int i = 1; i < balls.size(); i++){
+			if(balls.get(i).checkCollide(cue)) {
+					cue.set(tmp);
+					return;
+				}
 		}
+		cue.limit(kitchen ? -HEIGHT :  boundX, - boundX, boundY, - boundY);
+
     }
 
     public boolean cuePocket(){
@@ -212,18 +212,12 @@ public final class PoolTable {
 			if (ball.y() > boundY) {
 				checkCollide(ball, top);
 				pocket = centre.checkCollide(ball) || pocket;
-				if(ball.y() > ShaderProgram.getHeight()) {
-					ball.resetSpeed();
-					ball.set(ball.x(), ShaderProgram.getHeight());
-				}
 			}
 			if(ball.x() > boundX) {
 					checkCollide(ball, right);
-				if (ball.x() > ShaderProgram.getWidth()) {
-					ball.resetSpeed();
-					ball.set(ShaderProgram.getWidth(), ball.y());
-				}
 			}
+			float h = ShaderProgram.getHeight(), w = ShaderProgram.getWidth();
+			ball.limit(w, -w, h, -h);
 			return pocket; //return true if ball is in a pocket
 		}
 	},

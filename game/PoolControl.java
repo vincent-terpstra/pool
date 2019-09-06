@@ -23,7 +23,7 @@ public class PoolControl implements InputProcessor {
 	private boolean
 			aiming = false,
 			moveCue = false,
-			allowCueMove = false;
+			allowCueMove = true;
 
 	public PoolControl(PoolTable table, PoolBall cue, SpriteArray array) {
 		this.cue = cue;
@@ -53,8 +53,6 @@ public class PoolControl implements InputProcessor {
 			} else {
 				shader.draw(shader.lock, sign, 3);
 			}
-
-
 		}
 
 		shader.draw(shader.loop, cue, 2f);
@@ -82,6 +80,7 @@ public class PoolControl implements InputProcessor {
 		float y = screenY(screenY);
 		if(button == 1 || pointer == 2 ) {
 			moveCue = aiming = false;
+			allowCueMove = true;
 			table.rack();
 		} else if (allowCueMove && table.canMoveCue(x, y)){
 			moveCue = true;
