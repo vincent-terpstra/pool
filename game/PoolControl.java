@@ -54,8 +54,10 @@ public class PoolControl implements InputProcessor {
 				shader.draw(shader.lock, sign, 3);
 			}
 
-			shader.draw(shader.loop, cue, 2f);
+
 		}
+
+		shader.draw(shader.loop, cue, 2f);
 
 	    if(aiming) {
 
@@ -85,7 +87,9 @@ public class PoolControl implements InputProcessor {
 			moveCue = true;
 		} else if (sign.range(x,y, 3)){
 			allowCueMove = true;
-		} else{
+		} else if( table.sign.range(x, y, 3)){
+		    table.showType = table.showType == 1 ? 2 : 1;
+        } else {
 			aiming = true;
 			down.set(x, y);
 			delta.set(0, 0);

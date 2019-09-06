@@ -10,14 +10,11 @@ import com.vdt.poolgame.library.SpriteArray;
  */
 
 public class SunkDisplay {
-    final float[] solid, stripe;
 
     int idx = 0;
     int[] sunkList = new int[16];
 
     public SunkDisplay(SpriteArray array){
-        solid = array.get("solid");
-        stripe = array.get("stripe");
 
         reset();
     }
@@ -27,7 +24,7 @@ public class SunkDisplay {
         float x = -(idx -1) * space * .5f;
         for(int j = 0; j < idx; j++) {
             int idx = sunkList[j];
-            float[] draw = idx > 8 ? stripe : solid;
+            float[] draw = idx > 8 ? shader.stripe : shader.solid;
             if(idx == 8)
                 draw = shader.circle;
             shader.draw(draw, x, 0, space);

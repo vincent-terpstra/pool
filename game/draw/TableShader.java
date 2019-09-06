@@ -8,7 +8,7 @@ import com.vdt.poolgame.library.ShaderProgram;
 import com.vdt.poolgame.library.SpriteArray;
 
 public class TableShader extends ShaderProgram {
-	public final float[] circle, loop, lock, timer, arrow, circle2;
+	public final float[] circle, loop, lock, timer, arrow, circle2, stripe, solid;
 	private final float[]  wood, rect;
 
 	public void draw(float[] draw, PointXY point, float diameter){
@@ -93,6 +93,8 @@ public class TableShader extends ShaderProgram {
 
 		circle = array.get("circle");
 		circle2 = array.get("circle2");
+		stripe = array.get("stripe");
+		solid = array.get("solid");
 		rect = array.get("rect",1,1, -1, -.5f);
 
 		wood = array.get("wood", 2, 2,-.5f, 0);

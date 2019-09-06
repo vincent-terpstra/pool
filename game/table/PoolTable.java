@@ -15,6 +15,8 @@ public final class PoolTable {
 
 	public static final float HEIGHT = 18f, WIDTH = 2 * HEIGHT;
 	private static final float boundX = WIDTH - 1, boundY = HEIGHT - 1;
+    public int showType = 0;
+    public PointXY sign = new PointXY().set(- (WIDTH - 4), -HEIGHT + 4);
 
 	private boolean locked = false, cuePocket = false;
 
@@ -63,6 +65,7 @@ public final class PoolTable {
 	
 	public void rack(){
 	    kitchen = true; //can move the cue ball
+		showType = 0;
 		sunk.reset();
         float[] rackPos = {
                 0, 0,	1, 1,	2,-2,	4, 2,
@@ -108,6 +111,7 @@ public final class PoolTable {
 						balls.remove(idx);
 						inPocket.add(current);
 						sunk.add(current.id());
+						showType = current.id() > 8 ? 2 : 1;
 					} else {
 						//Cue ball in pocket
 						cuePocket = true;
@@ -263,9 +267,20 @@ public final class PoolTable {
 		for(TableObject obj : right)
 			obj.draw(shader);
 		/**/
+        if(showType != 0) {
+            shader.draw((showType == 1 ? shader.solid : shader.stripe), sign, 6 );
+        }
 
+		for(PoolBall ball: balls) {
+
+			if(ball.id() != 0 && ((showType == 1 && ball.id() < 8) || (showType == 2 && ball.id() > 8))){
+				shader.draw(shader.loop, ball, 2);
+			}
+		}
 
 		sunk.draw(shader);
+
+
 		shader.end();
 		batch.begin();
 		for(PoolBall ball: inPocket)
@@ -273,7 +288,6 @@ public final class PoolTable {
 
 		for(PoolBall ball: balls)
 			batch.drawBall(ball);
-
 	}
 
 	
