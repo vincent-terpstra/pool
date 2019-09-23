@@ -1,4 +1,4 @@
-# pool
+# PoolGame
 pool game for android, using java &amp; libgdx
 
 
