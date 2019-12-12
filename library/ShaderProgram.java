@@ -3,6 +3,7 @@ package com.vdt.poolgame.library;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.utils.BufferUtils;
+import com.vdt.poolgame.game.PoolGame;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -12,12 +13,15 @@ import java.nio.ShortBuffer;
 import static com.badlogic.gdx.Gdx.gl20;
 
 public abstract class ShaderProgram {
-	protected static float height = 1, width = 1, ratio = 1;
-	
+
+
 	public static void clearScreen(){
 		Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT | GL20.GL_COLOR_BUFFER_BIT);
 	}
-	
+	public static void setClearColor(float r, float g, float b){
+    	Gdx.gl.glClearColor (r, g, b, 1 );
+	}
+
 	protected final int 	programHandle, fragment, vertex;
 	protected final int[] 	uniformIDS;
 	
@@ -40,15 +44,22 @@ public abstract class ShaderProgram {
 		Gdx.gl.glUseProgram		 ( programHandle	   );
 		//apply the texture to the shader
 		Gdx.gl.glUniform1f		 ( uniformIDS[0], 0 );
-		
+
+        //create the board (centered at 0,0)
+        float[] matrix2 =  { 1/ PoolGame.getWidth(), 0,
+                0,-1/PoolGame.getHeight() };
+        Gdx.gl.glUniformMatrix2fv( uniformIDS[1], 1, false, matrix2, 0);
+
 		derivedBegin(); //call derived class method
 	}
-	
-	protected final void bind(int totalIndices, float[] drawValues, int clrIdx) {
-		if(drawValues != null) {
-			vertices.position(0);
-			vertices.put(drawValues);
-		}
+
+	protected final void bind(int totalIndices, float[] drawValues, int clrIdx){
+		vertices.position(0);
+		vertices.put(drawValues);
+		bind(totalIndices, clrIdx);
+	}
+
+	protected final void bind(int totalIndices, int clrIdx) {
 		int idx = 0;
 		int offset = 0;
 		for(int i : attrSize) {
@@ -77,7 +88,6 @@ public abstract class ShaderProgram {
 		this.attrSize = attrSize;
 		//Setup GL constants
 		GL20 gl = Gdx.gl;
-		gl.glClearColor (0, 0, 1, 1 );
 		//enable blending
 		gl.glEnable	  (	GL20.GL_BLEND );
 		gl.glBlendFunc( GL20.GL_SRC_ALPHA, 

@@ -6,7 +6,7 @@ import com.vdt.poolgame.game.table.PoolBall;
 import com.vdt.poolgame.library.ShaderProgram;
 import com.vdt.poolgame.library.SpriteArray;
 
-public class PoolBallShader extends ShaderProgram {
+public class PoolBallShader extends ShaderProgram implements PoolBallDraw {
 	public void drawBall(PoolBall ball) {
 		GL20 gl  = Gdx.gl;
 		//supply the location of the ball and of the texture UV to the shader

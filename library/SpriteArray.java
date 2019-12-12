@@ -2,6 +2,7 @@ package com.vdt.poolgame.library;
 
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.StreamUtils;
@@ -69,7 +70,11 @@ public final class SpriteArray{
 			lastMatch = comma + 1;
 		}
 	}
-	
+	public final TextureRegion getTextureRegion(String region){
+		Region r = region(region);
+
+		return new TextureRegion(texture, r.u, r.v, r.u2, r.v2);
+	}
 	public final float[] get(String region){
 		return get(region, 1, 1);
 	}

@@ -1,5 +1,7 @@
 package com.vdt.poolgame.library;
 
+import com.badlogic.gdx.utils.TimeUtils;
+
 /**
  * @author Vincent Terpstra
  * @date Jan 27, 2019
@@ -15,7 +17,7 @@ public class TimeStep {
 	public TimeStep(float delta){
 		this.delta = delta;
 		this.frame = (long)(delta * 1000000000l);
-		this.pastTime = System.nanoTime();
+		this.pastTime = TimeUtils.nanoTime();
 	}
 	private 	  long pastTime;
 	private		  long bank;
@@ -25,7 +27,7 @@ public class TimeStep {
 	
 	public boolean update(){
 		if(!synced) {
-			long time = System.nanoTime();
+			long time = TimeUtils.nanoTime();
 			bank += time - pastTime;
 			pastTime = time;
 			//if there is more then 100 frames banked throw out bank

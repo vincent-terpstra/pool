@@ -44,6 +44,7 @@ public class PointXY implements Cloneable {
 	public final PointXY scale(float multi) {
 		return set(x * multi, y * multi);
 	}
+
 	public final PointXY scale(float multiX, float multiY){
 	    return set(x * multiX, y * multiY);
     }
@@ -60,13 +61,21 @@ public class PointXY implements Cloneable {
 		}
 		return dist;
 	}
-	public PointXY clone() {
-		try {
-			return (PointXY) super.clone();
-		} catch (CloneNotSupportedException e) {
-			return new PointXY().set(x, y);
-		}
+
+	public final boolean range(float _x, float _y, float dist){
+		_x -= this.x;
+		_y -= this.y;
+		return _x * _x  + _y * _y < dist * dist;
 	}
+
+	public PointXY clone() {
+			return new PointXY().set(x, y);
+	}
+
+	public void limit(float maxX, float minX, float maxY, float minY){
+	    x = Math.min(maxX, Math.max(minX, x));
+	    y = Math.min(maxY, Math.max(minY, y));
+    }
 	
 	public final void print() {
 		System.out.println(x + " : " + y);

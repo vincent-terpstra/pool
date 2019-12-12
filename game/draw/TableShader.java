@@ -1,14 +1,16 @@
 package com.vdt.poolgame.game.draw;
 
 import com.badlogic.gdx.Gdx;
+import com.vdt.poolgame.game.PoolGame;
 import com.vdt.poolgame.game.table.Pocket;
+import com.vdt.poolgame.game.table.PoolBall;
 import com.vdt.poolgame.game.table.PoolTable;
 import com.vdt.poolgame.library.PointXY;
 import com.vdt.poolgame.library.ShaderProgram;
 import com.vdt.poolgame.library.SpriteArray;
 
-public class TableShader extends ShaderProgram {
-	public final float[] circle, loop, lock, timer, arrow, circle2, stripe, solid;
+public class TableShader extends ShaderProgram implements TableDraw {
+	public final float[] circle, loop, lock, timer, arrow, stripe, solid;
 	private final float[]  wood, rect;
 
 	public void draw(float[] draw, PointXY point, float diameter){
@@ -22,6 +24,17 @@ public class TableShader extends ShaderProgram {
 	public void drawLine(PointXY point, PointXY angle, float length, float scaleY){
 		draw(rect, point.x(), point.y(), -angle.x(), angle.y(), length, scaleY);
 	}
+
+	@Override
+	public void drawLoop(PointXY cue, float rad) {
+	    draw(loop, cue, rad);
+	}
+
+	@Override
+	public void drawCircle(PointXY cue, float rad) {
+		draw(circle, cue, rad);
+	}
+
 
 	public void draw(float[] draw, float x, float y){
 	    draw(draw, x, y, 1, 0, 1, 1);
@@ -52,13 +65,28 @@ public class TableShader extends ShaderProgram {
 		drawIdx = 0;
 	}
 
+	@Override
+	public void drawSunk(int idx, float x, float y, float rad) {
+		float[] draw = idx > 8 ? stripe : solid;
+		if(idx == 8)
+			draw = circle;
+		draw(draw, x, y, rad);
+	}
 
+
+	@Override
+	public void drawInd(int id, PoolBall ball, float rad) {
+		float[] type = loop;
+		if(id == 8) type = solid;
+		if(id  > 8) type = stripe;
+		draw(type, ball, rad);
+	}
 	@Override
 	protected final void derivedBegin(){
 		drawIdx = finalIDX;
 		//create the board (centered at 0,0)
-		float[] matrix2 =  { 1/width, 0,
-							 0,-1/height };
+		float[] matrix2 =  { 1/ PoolGame.getWidth(), 0,
+							 0,-1/PoolGame.getHeight() };
 		Gdx.gl.glUniformMatrix2fv( uniformIDS[1], 1, false, matrix2, 0);
 	}
 
@@ -83,7 +111,7 @@ public class TableShader extends ShaderProgram {
 				"void main(){" 										+
 				"		gl_FragColor = texture2D(u_texture, v_uv);" +
 				"}",
-				40,
+				60,
 				new String[] {"u_texture", "u_mat" },
 				new String[]{"a_xy", "a_uv" },
 				new int[] {2, 2});
@@ -92,40 +120,23 @@ public class TableShader extends ShaderProgram {
 
 
 		circle = array.get("circle");
-		circle2 = array.get("circle2");
 		stripe = array.get("stripe");
 		solid = array.get("solid");
 		rect = array.get("rect",1,1, -1, -.5f);
 
 		wood = array.get("wood", 2, 2,-.5f, 0);
 		loop = array.get("loop", 2, 2);
-        lock = array.get("lock", 1, 0);
-        timer = array.get("timer", 1, 0);
-        arrow = array.get("arrow", 1, 1);
-
-		resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        lock = array.get("lock", .9f, 0);
+        timer = array.get("timer", .9f, 0);
+        arrow = array.get("arrow", 1f, 1);
 	}
 
-
-	public void resize(int _width, int _height){
-		height = Math.max(PoolTable.HEIGHT + 1f, (PoolTable.WIDTH + 1f ) * (float)_height / (float)_width);
-		width = height * (float)_width / (float)_height;
-		ratio = 2 * width / _width;
-
-	//redraw wooden panels on top or side of the board
-		drawIdx = 0;
-
-		if (height < PoolTable.HEIGHT + 1){
-			float s_x = PoolTable.WIDTH, d_x = width - s_x;
-			draw(wood,  s_x+=1.8f, 0, 0, 1,  height, d_x);
-			draw(wood, -s_x		 , 0, 0, 1, -height,-d_x);
-		} else {
-			float b_y = PoolTable.HEIGHT, d_y = height - b_y;
-			draw(wood, 0, b_y += 1.8f, 1, 0, width, d_y);
-			draw(wood, 0, -b_y, 1, 0, -width, -d_y);
-		}
+	@Override
+	public void drawArrow(PoolBall cue, PointXY angle, float length, float rotation) {
+		draw(arrow, cue,  angle, length);
 	}
 
+	@Override
 	public void drawEdge(SpriteArray array, PointXY corner) {
 
 		final float[]

@@ -3,11 +3,12 @@ package com.vdt.poolgame.game.table;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.vdt.poolgame.game.PoolGame;
+import com.vdt.poolgame.game.draw.PoolBallDraw;
 import com.vdt.poolgame.game.draw.SunkDisplay;
+import com.vdt.poolgame.game.draw.TableDraw;
 import com.vdt.poolgame.game.draw.TableShader;
-import com.vdt.poolgame.game.draw.PoolBallShader;
 import com.vdt.poolgame.library.PointXY;
-import com.vdt.poolgame.library.ShaderProgram;
 import com.vdt.poolgame.library.SpriteArray;
 
 public final class PoolTable {
@@ -15,13 +16,11 @@ public final class PoolTable {
 
 	public static final float HEIGHT = 18f, WIDTH = 2 * HEIGHT;
 	private static final float boundX = WIDTH - 1, boundY = HEIGHT - 1;
-    public int showType = 0;
-    public PointXY sign = new PointXY().set(- (WIDTH - 4), -HEIGHT + 4);
 
 	private boolean locked = false, cuePocket = false;
 
 
-	public PoolTable(SpriteArray array, TableShader shader){
+	public PoolTable(SpriteArray array, TableDraw shader){
 		for(int i = 0; i < 16; i++)
 			balls.add(new PoolBall());
 
@@ -52,21 +51,21 @@ public final class PoolTable {
 		shader.drawEdge(array, corner);
 		//only need to add these edges once
 
-		sunk = new SunkDisplay(array);
+		sunk = new SunkDisplay();
 
 		rack();
 	}
 
 	public final List<PoolBall>
-			balls = new ArrayList<PoolBall>(),
-			inPocket = new ArrayList<PoolBall>();
+			balls = new ArrayList<>(),
+			inPocket = new ArrayList<>();
 	private final Pocket centre, corner;
 	private final TableObject[] right, top;
 	
 	public void rack(){
 	    kitchen = true; //can move the cue ball
-		showType = 0;
-		sunk.reset();
+        cuePocket = locked = false;
+		sunk.zero();
         float[] rackPos = {
                 0, 0,	1, 1,	2,-2,	4, 2,
                 3,-1,	4,-4,	3, 3,
@@ -110,9 +109,7 @@ public final class PoolTable {
 					if(current.id() != 0) {
 						balls.remove(idx);
 						inPocket.add(current);
-						sunk.add(current.id());
-						if(showType == 0)
-							showType = current.id() > 8 ? 2 : 1;
+						sunk.add(current.id(), current.x() > WIDTH / 2? 1 : (current.x() < - WIDTH/2 ? -1 : 0), current.y() > 0 ? 1 : -1);
 					} else {
 						//Cue ball in pocket
 						cuePocket = true;
@@ -125,7 +122,7 @@ public final class PoolTable {
 		}
 	}
 
-	public final void predict(TableShader shader, PointXY  velocity){
+	public final void predict(TableDraw shader, PointXY  velocity){
 		if(!locked){
 			PoolBall cue = balls.get(0);
 			PointXY tmp = new PointXY().set(cue);
@@ -133,7 +130,7 @@ public final class PoolTable {
 
 			findCollision( cue);
 
-			shader.draw(shader.circle, cue, 2f);
+			shader.drawCircle(cue, 2f);
 			cue.resetSpeed();
 			cue.set(tmp);
 		}
@@ -150,31 +147,53 @@ public final class PoolTable {
 	public final void moveCue(float x, float y){
 		if( locked ) return;
 
-		cuePocket = false;
-		PoolBall cue = balls.get(0);
-		PointXY tmp = cue.clone();
-		cue.set(x, y);
-		for(int i = 1; i < balls.size(); i++){
-			if(balls.get(i).checkCollide(cue)) {
-					cue.set(tmp);
-					return;
-				}
-		}
-		cue.limit(kitchen ? -HEIGHT :  boundX, - boundX, boundY, - boundY);
 
+		PoolBall cue = balls.get(0);
+
+
+		PoolBall tmp = new PoolBall();
+			tmp.set(x, y);
+			tmp.limit(kitchen ? -HEIGHT :  boundX, - boundX, boundY, - boundY);
+
+		PoolBall collision = checkClone(tmp);
+		if(collision != null){
+			tmp.move(-1f, collision).normalize();
+			tmp.scale(2.01f).move(1f, collision);
+
+			if(checkClone(tmp) != null)
+				return;
+		}
+
+		cuePocket = false;
+		cue.set(tmp);
     }
+
+    private final PoolBall checkClone(PoolBall clone){
+		for(int i = 1; i < balls.size(); i++){
+			PoolBall check = balls.get(i);
+			if(check.checkCollide(clone))
+				return check;
+		}
+		return null;
+	}
+
 
     public boolean cuePocket(){
 		return cuePocket;
 	}
 
-    boolean kitchen = true; // ball must be in kitchen
+    private boolean kitchen = true; // ball must be in kitchen
+    private boolean displayType = true;
+
+    public void flipDisplay(){
+    	displayType = !displayType;
+	}
 
     public final void fireCue(PointXY speed){
     	if(locked || cuePocket) return;
 
 		balls.get(0).setSpeed(speed);
-
+		sunk.zero();
 		kitchen = false;
 	}
 
@@ -216,7 +235,7 @@ public final class PoolTable {
 			if(ball.x() > boundX) {
 					checkCollide(ball, right);
 			}
-			float h = ShaderProgram.getHeight(), w = ShaderProgram.getWidth();
+			float h = PoolGame.getHeight(), w = PoolGame.getWidth();
 			ball.limit(w, -w, h, -h);
 			return pocket; //return true if ball is in a pocket
 		}
@@ -250,7 +269,7 @@ public final class PoolTable {
 	}
 
 
-	public void draw(PoolBallShader batch, TableShader shader){
+	public void draw(PoolBallDraw batch, TableDraw shader){
 		/**
 			shader.drawCircle(centre, Pocket.RADIUS * 2);
 			shader.drawCircle(corner, Pocket.RADIUS * 2);
@@ -261,19 +280,15 @@ public final class PoolTable {
 		for(TableObject obj : right)
 			obj.draw(shader);
 		/**/
-        if(showType != 0) {
-            shader.draw((showType == 1 ? shader.solid : shader.stripe), sign, 6 );
-        }
-
+		//show indicators to easily tell the difference btwn stripes solids & 8
+        if(displayType)
 		for(PoolBall ball: balls) {
-
-			if(ball.id() != 0 && ((showType == 1 && ball.id() < 8) || (showType == 2 && ball.id() > 8))){
-				shader.draw(shader.loop, ball, 2);
-			}
+		    int id = ball.id();
+            if(id != 0){ //ignore cue
+                shader.drawInd(id, ball, id < 8 ? 2 : 4);
+            }
 		}
-
 		sunk.draw(shader);
-
 
 		shader.end();
 		batch.begin();

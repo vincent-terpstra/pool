@@ -1,13 +1,12 @@
 package com.vdt.poolgame.game;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.vdt.poolgame.game.draw.TableShader;
+import com.vdt.poolgame.game.draw.TableDraw;
 import com.vdt.poolgame.game.table.PoolBall;
 import com.vdt.poolgame.game.table.PoolTable;
 import com.vdt.poolgame.library.PointXY;
-import com.vdt.poolgame.library.ShaderProgram;
-import com.vdt.poolgame.library.SpriteArray;
 
 public class PoolControl implements InputProcessor {
 	private final PoolBall  cue;
@@ -22,44 +21,33 @@ public class PoolControl implements InputProcessor {
 
 	private boolean
 			aiming = false,
-			moveCue = false,
-			allowCueMove = true;
+			draggingCue = false,
+			allowCueMove = true,
+			onCue = false;
 
-	public PoolControl(PoolTable table, PoolBall cue, SpriteArray array) {
+	public PoolControl(PoolTable table, PoolBall cue) {
 		this.cue = cue;
 		this.table = table;
-		sign = new PointXY().set(- (table.WIDTH - 4), table.HEIGHT - 4);
 	}
 
-	private final PointXY sign;
+	public void reset(){
+		aiming = false;
+	}
 
+	public void draw(TableDraw shader){
+		if(allowCueMove || table.cuePocket()){
+			PointXY angle = new PointXY().degrees(45);
+			shader.drawArrow(cue, angle, 4.1f, 45);
 
-	public void draw(TableShader shader){
-		shader.draw(shader.loop, sign, 3);
-
-		if(table.isLocked()){
-			shader.draw(shader.timer, sign, 3);
-			allowCueMove = false;
-		} else {
-			if(table.cuePocket())
+			if(!table.isLocked()){
 				allowCueMove = true;
-
-			if(allowCueMove){
-				PointXY angle = new PointXY().degrees(45);
-				shader.draw(shader.circle2, sign, 2.7f);
-				shader.draw(shader.arrow, sign, angle, 3f);
-				shader.draw(shader.arrow, cue,  angle, 4.1f);
-
-			} else {
-				shader.draw(shader.lock, sign, 3);
 			}
 		}
 
-		shader.draw(shader.loop, cue, 2f);
+		shader.drawLoop( cue, 2f);
 
 	    if(aiming) {
-
-	    	shader.draw(shader.loop, down, 2f);
+	    	shader.drawLoop( down, 2f);
 
 	    	if(speed > 2) {
 				shader.drawLine(cue.clone().move(-1.95f, delta), delta, speed * SCALE + 4.4f, .5f);
@@ -72,23 +60,24 @@ public class PoolControl implements InputProcessor {
         }
 	}
 
-
+	int totalTouches = 0;
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
 		float x = screenX(screenX);
 		float y = screenY(screenY);
-		if(button == 1 || pointer == 2 ) {
-			moveCue = aiming = false;
+
+		if(++totalTouches == 2){ //second touch
+			aiming = false;
+			table.flipDisplay(); //show or hide type indicators
+		} else if(button == 1 || totalTouches == 3 ) { //three touch (reset)
+			draggingCue = aiming = false;
 			allowCueMove = true;
 			table.rack();
-		} else if (allowCueMove && table.canMoveCue(x, y)){
-			moveCue = true;
-		} else if (sign.range(x,y, 3)){
-			allowCueMove = true;
-		} else if( table.sign.range(x, y, 3)){
-		    table.showType = table.showType == 1 ? 2 : 1;
-        } else {
+		} else if (allowCueMove && table.canMoveCue(x, y)){ //allow move
+			draggingCue = true;
+		} else {
+			onCue = !table.isLocked() && cue.range(x, y, 2);
 			aiming = true;
 			down.set(x, y);
 			delta.set(0, 0);
@@ -96,16 +85,23 @@ public class PoolControl implements InputProcessor {
 		return true;
 	}
 
-	public void reset(){
-	    aiming = false;
-	}
 
 	@Override
 	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        if( aiming && speed > MIN_SPEED){
+
+	    totalTouches--;
+
+        if(totalTouches == 0 && aiming && speed > MIN_SPEED){
         	table.fireCue(delta.scale( Math.max(speed * SCALE, -MAX_SPEED)));
+        	allowCueMove = false;
         }
-		moveCue = aiming = false;
+
+        if(!Gdx.input.isTouched())
+			totalTouches = 0;
+
+		allowCueMove = allowCueMove || (onCue && cue.range(screenX(screenX), screenY(screenY), 2));
+
+		onCue = draggingCue = aiming = false;
 		return true;
 	}
 
@@ -113,7 +109,7 @@ public class PoolControl implements InputProcessor {
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
 		float x = screenX(screenX);
 		float y = screenY(screenY);
-		if(moveCue ){
+		if(draggingCue){
 			table.moveCue(x, y);
 		} else if( aiming ) {
 			speed = delta.set(x, y).move(-1, down).normalize();
@@ -122,17 +118,20 @@ public class PoolControl implements InputProcessor {
 	}
 
 	private static final float screenX(float _x){
-		return (_x /(float)Gdx.graphics.getWidth() - .5f) * ShaderProgram.getWidth() * 2;
+		return (_x /(float)Gdx.graphics.getWidth() - .5f) * PoolGame.getWidth() * 2;
 	}
 
 	private static final float screenY(float _y){
-		return (_y /(float)Gdx.graphics.getHeight() - .5f) * ShaderProgram.getHeight() * 2;
+		return (_y /(float)Gdx.graphics.getHeight() - .5f) * PoolGame.getHeight() * 2;
 	}
 
-
-	
 	//Unhandled inputs
-	@Override public boolean keyDown(int keycode) { return false; }
+	@Override public boolean keyDown(int keycode) {
+	    if(keycode == Input.Keys.SPACE){
+            table.flipDisplay();
+        }
+	    return true;
+	}
 	@Override public boolean keyUp  (int keycode) { return false; }
 	@Override public boolean scrolled(int amount) { return false; }
 	@Override public boolean keyTyped(char input) { return false; }

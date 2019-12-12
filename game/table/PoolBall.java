@@ -65,7 +65,7 @@ public final class PoolBall extends PointXY {
 		} else {
 			move(delta * speed, velocity);
 			matrix.rotateY(-velocity.x() * speed * delta, -velocity.y() * speed * delta);
-			speed -= 3f * delta;
+			speed -= 5f * delta;
 		}
 		return speed != 0;
 	}
