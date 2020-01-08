@@ -83,7 +83,7 @@ public final class PoolTable {
 		balls.get(0).reset(0, -HEIGHT, 0); //add cue ball
 
 		for(int i = 0; i < rackPos.length;){
-			balls.get(i/2 +1).reset(i / 2 + 1,HEIGHT + rackPos[i++] * delta, rackPos[i++]);
+			balls.get(i/2 +1).reset(i / 2 + 1, HEIGHT  + rackPos[i++] * delta, rackPos[i++]);
 		}
 	}
 
@@ -140,20 +140,17 @@ public final class PoolTable {
 	    return locked;
     }
 
-	public final boolean canMoveCue(float x, float y){
-	    return !locked && balls.get(0).range(x, y, 4);
-    }
-
-	public final void moveCue(float x, float y){
-		if( locked ) return;
-
-
+    public final void moveCue(float x, float y){
 		PoolBall cue = balls.get(0);
-
-
 		PoolBall tmp = new PoolBall();
-			tmp.set(x, y);
-			tmp.limit(kitchen ? -HEIGHT :  boundX, - boundX, boundY, - boundY);
+
+		tmp.set(x, y);
+		tmp.limit(kitchen ? -HEIGHT :  boundX, - boundX, boundY, - boundY);
+
+		if(locked){ //allow the cue to move even when the table is in motion
+			cue.set(tmp);
+			return;
+		}
 
 		PoolBall collision = checkClone(tmp);
 		if(collision != null){
@@ -163,10 +160,11 @@ public final class PoolTable {
 			if(checkClone(tmp) != null)
 				return;
 		}
-
-		cuePocket = false;
 		cue.set(tmp);
-    }
+		cuePocket = false;
+
+	}
+
 
     private final PoolBall checkClone(PoolBall clone){
 		for(int i = 1; i < balls.size(); i++){
@@ -190,11 +188,13 @@ public final class PoolTable {
 	}
 
     public final void fireCue(PointXY speed){
-    	if(locked || cuePocket) return;
+    	//cannot fire the cue if the table is moving or the cue overlaps another
+    	if(locked || checkClone(balls.get(0)) != null) return;
 
 		balls.get(0).setSpeed(speed);
 		sunk.zero();
 		kitchen = false;
+		cuePocket = false;
 	}
 
 	private final void findCollision(PoolBall cue){

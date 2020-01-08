@@ -144,6 +144,20 @@ public class TableShader extends ShaderProgram implements TableDraw {
 			left = array.get("left", 0, 4, 0, 0),
 			side = array.get("right", 0, 4, -1, 0),
 			line = array.get("black", 1, 1, -.5f, -.5f);
+
+		//redraw wooden panels on top or side of the board
+		drawIdx = 0;
+		float height = PoolGame.getHeight();
+		float width = PoolGame.getWidth();
+		if (height < PoolTable.HEIGHT + 1){
+			float s_x = PoolTable.WIDTH, d_x = width - s_x;
+			draw(wood,  s_x+=1.8f, 0, 0, 1,  height, d_x);
+			draw(wood, -s_x		 , 0, 0, 1, -height,-d_x);
+		} else {
+			float b_y = PoolTable.HEIGHT, d_y = PoolGame.getHeight() - b_y;
+			draw(wood, 0, b_y += 1.8f, 1, 0, width, d_y);
+			draw(wood, 0, -b_y, 1, 0, -width, -d_y);
+		}
 		float scaleX = 1, scaleY = 1;
 		for(int j = 0; j < 4; j++) {
 			draw(drawPocket, scaleX * corner.x(), scaleY * corner.y());

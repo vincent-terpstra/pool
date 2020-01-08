@@ -10,6 +10,7 @@ import com.vdt.poolgame.game.draw.TableDraw;
 import com.vdt.poolgame.game.draw.TableShader;
 import com.vdt.poolgame.game.draw.PoolBallShader;
 import com.vdt.poolgame.game.table.PoolTable;
+import com.vdt.poolgame.library.IconProcessor;
 import com.vdt.poolgame.library.SpriteArray;
 import com.vdt.poolgame.library.TimeStep;
 
@@ -54,44 +55,30 @@ public class PoolGame extends ApplicationAdapter {
 		height = Math.max(PoolTable.HEIGHT + 1f, (PoolTable.WIDTH + 1f ) * (float)_height / (float)_width);
 		width = height * (float)_width / (float)_height;
 		ratio = 2 * width / _width;
-
-		//redraw wooden panels on top or side of the board
-		//drawIdx = 0;
-
-		if (height < PoolTable.HEIGHT + 1){
-			float s_x = PoolTable.WIDTH, d_x = width - s_x;
-			//draw(wood,  s_x+=1.8f, 0, 0, 1,  height, d_x);
-			//draw(wood, -s_x		 , 0, 0, 1, -height,-d_x);
-		} else {
-			float b_y = PoolTable.HEIGHT, d_y = height - b_y;
-			//draw(wood, 0, b_y += 1.8f, 1, 0, width, d_y);
-			//draw(wood, 0, -b_y, 1, 0, -width, -d_y);
-		}
 	}
-	
+
 	@Override
 	public void create () {
+		//IconProcessor.processIcons();
 		SpriteArray pool = new SpriteArray("images");
 
 		resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
-		shader	= new TableBatch(pool);
-		batch	= new PoolBallBatch((TableBatch)shader, pool);
+		shader	= new TableShader(pool);
+		batch	= new PoolBallShader(pool);
 
-		table = new PoolTable(pool, shader);
+		table   = new PoolTable(pool, shader);
 	
 		control  = new PoolControl(table, table.balls.get(0));
 
 		texture  = pool.getTexture();
+
 		texture.bind();
 
 		timer = new TimeStep(.005f);
 
 		TableShader.setClearColor(.15f, .45f, 1f);
 		resume();
-
-
-
 	}
 
 	@Override

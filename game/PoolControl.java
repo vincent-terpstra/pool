@@ -9,6 +9,10 @@ import com.vdt.poolgame.game.table.PoolTable;
 import com.vdt.poolgame.library.PointXY;
 
 public class PoolControl implements InputProcessor {
+	public PoolControl(PoolTable table, PoolBall cue) {
+		this.cue = cue;
+		this.table = table;
+	}
 	private final PoolBall  cue;
 	private final PoolTable table;
 	private final PointXY down  = new PointXY();
@@ -22,26 +26,19 @@ public class PoolControl implements InputProcessor {
 	private boolean
 			aiming = false,
 			draggingCue = false,
-			allowCueMove = true,
-			onCue = false;
-
-	public PoolControl(PoolTable table, PoolBall cue) {
-		this.cue = cue;
-		this.table = table;
-	}
+			allowCueMove = true;
 
 	public void reset(){
 		aiming = false;
 	}
 
 	public void draw(TableDraw shader){
-		if(allowCueMove || table.cuePocket()){
+		if(table.cuePocket())
+			allowCueMove = true;
+
+		if(allowCueMove ){
 			PointXY angle = new PointXY().degrees(45);
 			shader.drawArrow(cue, angle, 4.1f, 45);
-
-			if(!table.isLocked()){
-				allowCueMove = true;
-			}
 		}
 
 		shader.drawLoop( cue, 2f);
@@ -74,10 +71,13 @@ public class PoolControl implements InputProcessor {
 			draggingCue = aiming = false;
 			allowCueMove = true;
 			table.rack();
-		} else if (allowCueMove && table.canMoveCue(x, y)){ //allow move
-			draggingCue = true;
+		} else if ( cue.range(x, y, 3)){ //allow move
+			if(allowCueMove) {
+				draggingCue = true;
+			} else {
+				allowCueMove = true;
+			}
 		} else {
-			onCue = !table.isLocked() && cue.range(x, y, 2);
 			aiming = true;
 			down.set(x, y);
 			delta.set(0, 0);
@@ -96,12 +96,10 @@ public class PoolControl implements InputProcessor {
         	allowCueMove = false;
         }
 
-        if(!Gdx.input.isTouched())
+        if( ! Gdx.input.isTouched())//no touches registered
 			totalTouches = 0;
 
-		allowCueMove = allowCueMove || (onCue && cue.range(screenX(screenX), screenY(screenY), 2));
-
-		onCue = draggingCue = aiming = false;
+		draggingCue = aiming = false;
 		return true;
 	}
 
@@ -109,7 +107,7 @@ public class PoolControl implements InputProcessor {
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
 		float x = screenX(screenX);
 		float y = screenY(screenY);
-		if(draggingCue){
+		if( draggingCue ){
 			table.moveCue(x, y);
 		} else if( aiming ) {
 			speed = delta.set(x, y).move(-1, down).normalize();
